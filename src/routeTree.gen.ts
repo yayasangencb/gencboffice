@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as PengaturanRouteImport } from './routes/pengaturan'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as FlayerRouteImport } from './routes/flayer'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ArsipRouteImport } from './routes/arsip'
 import { Route as IndexRouteImport } from './routes/index'
@@ -25,6 +26,11 @@ const PengaturanRoute = PengaturanRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FlayerRoute = FlayerRouteImport.update({
+  id: '/flayer',
+  path: '/flayer',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardRoute = DashboardRouteImport.update({
@@ -57,6 +63,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/arsip': typeof ArsipRoute
   '/dashboard': typeof DashboardRoute
+  '/flayer': typeof FlayerRoute
   '/login': typeof LoginRoute
   '/pengaturan': typeof PengaturanRoute
   '/verify/$id': typeof VerifyIdRoute
@@ -66,6 +73,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/arsip': typeof ArsipRoute
   '/dashboard': typeof DashboardRoute
+  '/flayer': typeof FlayerRoute
   '/login': typeof LoginRoute
   '/pengaturan': typeof PengaturanRoute
   '/verify/$id': typeof VerifyIdRoute
@@ -76,6 +84,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/arsip': typeof ArsipRoute
   '/dashboard': typeof DashboardRoute
+  '/flayer': typeof FlayerRoute
   '/login': typeof LoginRoute
   '/pengaturan': typeof PengaturanRoute
   '/verify/$id': typeof VerifyIdRoute
@@ -87,6 +96,7 @@ export interface FileRouteTypes {
     | '/'
     | '/arsip'
     | '/dashboard'
+    | '/flayer'
     | '/login'
     | '/pengaturan'
     | '/verify/$id'
@@ -96,6 +106,7 @@ export interface FileRouteTypes {
     | '/'
     | '/arsip'
     | '/dashboard'
+    | '/flayer'
     | '/login'
     | '/pengaturan'
     | '/verify/$id'
@@ -105,6 +116,7 @@ export interface FileRouteTypes {
     | '/'
     | '/arsip'
     | '/dashboard'
+    | '/flayer'
     | '/login'
     | '/pengaturan'
     | '/verify/$id'
@@ -115,6 +127,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ArsipRoute: typeof ArsipRoute
   DashboardRoute: typeof DashboardRoute
+  FlayerRoute: typeof FlayerRoute
   LoginRoute: typeof LoginRoute
   PengaturanRoute: typeof PengaturanRoute
   VerifyIdRoute: typeof VerifyIdRoute
@@ -135,6 +148,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/flayer': {
+      id: '/flayer'
+      path: '/flayer'
+      fullPath: '/flayer'
+      preLoaderRoute: typeof FlayerRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard': {
@@ -179,6 +199,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ArsipRoute: ArsipRoute,
   DashboardRoute: DashboardRoute,
+  FlayerRoute: FlayerRoute,
   LoginRoute: LoginRoute,
   PengaturanRoute: PengaturanRoute,
   VerifyIdRoute: VerifyIdRoute,
