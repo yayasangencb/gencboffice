@@ -14,13 +14,219 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      flyers: {
+        Row: {
+          bg_url: string | null
+          created_at: string
+          description: string | null
+          event_date: string | null
+          event_time: string | null
+          id: string
+          location: string | null
+          logo_url: string | null
+          organizer: string | null
+          qr_url: string | null
+          subtitle: string | null
+          tagline: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          bg_url?: string | null
+          created_at?: string
+          description?: string | null
+          event_date?: string | null
+          event_time?: string | null
+          id?: string
+          location?: string | null
+          logo_url?: string | null
+          organizer?: string | null
+          qr_url?: string | null
+          subtitle?: string | null
+          tagline?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          bg_url?: string | null
+          created_at?: string
+          description?: string | null
+          event_date?: string | null
+          event_time?: string | null
+          id?: string
+          location?: string | null
+          logo_url?: string | null
+          organizer?: string | null
+          qr_url?: string | null
+          subtitle?: string | null
+          tagline?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      letter_counter: {
+        Row: {
+          last_number: number
+          year: number
+        }
+        Insert: {
+          last_number?: number
+          year: number
+        }
+        Update: {
+          last_number?: number
+          year?: number
+        }
+        Relationships: []
+      }
+      letters: {
+        Row: {
+          alamat: string | null
+          created_at: string
+          extra_logo_url: string | null
+          hari: string | null
+          id: string
+          instansi: string | null
+          is_draft: boolean
+          isi_surat: string | null
+          jabatan: string | null
+          jam: string | null
+          kepada: string | null
+          ketua_name: string | null
+          lampiran: string | null
+          letter_date: string
+          letter_number: string
+          letter_type: string
+          number_int: number
+          penutup: string | null
+          perihal: string
+          sekretaris_name: string | null
+          status: string
+          tanggal_acara: string | null
+          tempat: string | null
+          ttd_ketua_url: string | null
+          ttd_sekretaris_url: string | null
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          alamat?: string | null
+          created_at?: string
+          extra_logo_url?: string | null
+          hari?: string | null
+          id?: string
+          instansi?: string | null
+          is_draft?: boolean
+          isi_surat?: string | null
+          jabatan?: string | null
+          jam?: string | null
+          kepada?: string | null
+          ketua_name?: string | null
+          lampiran?: string | null
+          letter_date: string
+          letter_number: string
+          letter_type: string
+          number_int: number
+          penutup?: string | null
+          perihal: string
+          sekretaris_name?: string | null
+          status?: string
+          tanggal_acara?: string | null
+          tempat?: string | null
+          ttd_ketua_url?: string | null
+          ttd_sekretaris_url?: string | null
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          alamat?: string | null
+          created_at?: string
+          extra_logo_url?: string | null
+          hari?: string | null
+          id?: string
+          instansi?: string | null
+          is_draft?: boolean
+          isi_surat?: string | null
+          jabatan?: string | null
+          jam?: string | null
+          kepada?: string | null
+          ketua_name?: string | null
+          lampiran?: string | null
+          letter_date?: string
+          letter_number?: string
+          letter_type?: string
+          number_int?: number
+          penutup?: string | null
+          perihal?: string
+          sekretaris_name?: string | null
+          status?: string
+          tanggal_acara?: string | null
+          tempat?: string | null
+          ttd_ketua_url?: string | null
+          ttd_sekretaris_url?: string | null
+          updated_at?: string
+          year?: number
+        }
+        Relationships: []
+      }
+      organization: {
+        Row: {
+          address: string | null
+          created_at: string
+          email: string | null
+          id: string
+          ketua_name: string | null
+          logo_url: string | null
+          name: string
+          phone: string | null
+          sekretaris_name: string | null
+          short_name: string
+          ttd_ketua_url: string | null
+          ttd_sekretaris_url: string | null
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          ketua_name?: string | null
+          logo_url?: string | null
+          name?: string
+          phone?: string | null
+          sekretaris_name?: string | null
+          short_name?: string
+          ttd_ketua_url?: string | null
+          ttd_sekretaris_url?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          ketua_name?: string | null
+          logo_url?: string | null
+          name?: string
+          phone?: string | null
+          sekretaris_name?: string | null
+          short_name?: string
+          ttd_ketua_url?: string | null
+          ttd_sekretaris_url?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      next_letter_number: { Args: { p_year: number }; Returns: number }
     }
     Enums: {
       [_ in never]: never
