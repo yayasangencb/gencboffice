@@ -9,38 +9,168 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as PengaturanRouteImport } from './routes/pengaturan'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as FlayerRouteImport } from './routes/flayer'
+import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as ArsipRouteImport } from './routes/arsip'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SuratIndexRouteImport } from './routes/surat/index'
+import { Route as VerifyIdRouteImport } from './routes/verify.$id'
 
+const PengaturanRoute = PengaturanRouteImport.update({
+  id: '/pengaturan',
+  path: '/pengaturan',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FlayerRoute = FlayerRouteImport.update({
+  id: '/flayer',
+  path: '/flayer',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ArsipRoute = ArsipRouteImport.update({
+  id: '/arsip',
+  path: '/arsip',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SuratIndexRoute = SuratIndexRouteImport.update({
+  id: '/surat/',
+  path: '/surat/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VerifyIdRoute = VerifyIdRouteImport.update({
+  id: '/verify/$id',
+  path: '/verify/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/arsip': typeof ArsipRoute
+  '/dashboard': typeof DashboardRoute
+  '/flayer': typeof FlayerRoute
+  '/login': typeof LoginRoute
+  '/pengaturan': typeof PengaturanRoute
+  '/verify/$id': typeof VerifyIdRoute
+  '/surat/': typeof SuratIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/arsip': typeof ArsipRoute
+  '/dashboard': typeof DashboardRoute
+  '/flayer': typeof FlayerRoute
+  '/login': typeof LoginRoute
+  '/pengaturan': typeof PengaturanRoute
+  '/verify/$id': typeof VerifyIdRoute
+  '/surat': typeof SuratIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/arsip': typeof ArsipRoute
+  '/dashboard': typeof DashboardRoute
+  '/flayer': typeof FlayerRoute
+  '/login': typeof LoginRoute
+  '/pengaturan': typeof PengaturanRoute
+  '/verify/$id': typeof VerifyIdRoute
+  '/surat/': typeof SuratIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/arsip'
+    | '/dashboard'
+    | '/flayer'
+    | '/login'
+    | '/pengaturan'
+    | '/verify/$id'
+    | '/surat/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/arsip'
+    | '/dashboard'
+    | '/flayer'
+    | '/login'
+    | '/pengaturan'
+    | '/verify/$id'
+    | '/surat'
+  id:
+    | '__root__'
+    | '/'
+    | '/arsip'
+    | '/dashboard'
+    | '/flayer'
+    | '/login'
+    | '/pengaturan'
+    | '/verify/$id'
+    | '/surat/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ArsipRoute: typeof ArsipRoute
+  DashboardRoute: typeof DashboardRoute
+  FlayerRoute: typeof FlayerRoute
+  LoginRoute: typeof LoginRoute
+  PengaturanRoute: typeof PengaturanRoute
+  VerifyIdRoute: typeof VerifyIdRoute
+  SuratIndexRoute: typeof SuratIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/pengaturan': {
+      id: '/pengaturan'
+      path: '/pengaturan'
+      fullPath: '/pengaturan'
+      preLoaderRoute: typeof PengaturanRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/flayer': {
+      id: '/flayer'
+      path: '/flayer'
+      fullPath: '/flayer'
+      preLoaderRoute: typeof FlayerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/arsip': {
+      id: '/arsip'
+      path: '/arsip'
+      fullPath: '/arsip'
+      preLoaderRoute: typeof ArsipRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,22 +178,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/surat/': {
+      id: '/surat/'
+      path: '/surat'
+      fullPath: '/surat/'
+      preLoaderRoute: typeof SuratIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/verify/$id': {
+      id: '/verify/$id'
+      path: '/verify/$id'
+      fullPath: '/verify/$id'
+      preLoaderRoute: typeof VerifyIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ArsipRoute: ArsipRoute,
+  DashboardRoute: DashboardRoute,
+  FlayerRoute: FlayerRoute,
+  LoginRoute: LoginRoute,
+  PengaturanRoute: PengaturanRoute,
+  VerifyIdRoute: VerifyIdRoute,
+  SuratIndexRoute: SuratIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
