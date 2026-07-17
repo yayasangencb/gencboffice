@@ -86,13 +86,17 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           "Aplikasi internal Yayasan Generasi Cerdas Beraksi untuk membuat surat resmi dan flayer rapat secara otomatis.",
       },
       { name: "author", content: "GEN-CB" },
-      { property: "og:title", content: "GEN-CB Office" },
+      { property: "og:title", content: "GEN-CB Office — Generator Surat & Flayer" },
       {
         property: "og:description",
-        content: "Generator surat & flayer internal Yayasan GEN-CB.",
+        content: "Aplikasi internal Yayasan Generasi Cerdas Beraksi untuk membuat surat resmi dan flayer rapat secara otomatis.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "GEN-CB Office — Generator Surat & Flayer" },
+      { name: "twitter:description", content: "Aplikasi internal Yayasan Generasi Cerdas Beraksi untuk membuat surat resmi dan flayer rapat secara otomatis." },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/5b27eb36-fec1-4bd1-a2ef-b3f4975b8e11" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/5b27eb36-fec1-4bd1-a2ef-b3f4975b8e11" },
     ],
     links: [
       {
