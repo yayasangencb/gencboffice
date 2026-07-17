@@ -134,13 +134,26 @@ function SuratPage() {
     try {
       const payload = {
         letter_number: letterNumber,
-        letter_number_seq: reserved.num,
-        letter_year: reserved.year,
+        number_int: reserved.num,
+        year: reserved.year,
         letter_type: typeCode,
         letter_date: letterDate,
         perihal: form.perihal,
         kepada: form.kepada,
         instansi: form.instansi,
+        alamat: form.alamat,
+        lampiran: form.lampiran,
+        isi_surat: form.isi_surat,
+        hari: form.hari,
+        tanggal_acara: form.tanggal_acara || null,
+        jam: form.jam,
+        tempat: form.tempat,
+        penutup: form.penutup,
+        jabatan: form.jabatan,
+        ketua_name: org.ketua_name,
+        sekretaris_name: org.sekretaris_name,
+        ttd_ketua_url: org.ttd_ketua_url,
+        ttd_sekretaris_url: org.ttd_sekretaris_url,
         payload: letterData as unknown,
       };
       let id = savedId;
