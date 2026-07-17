@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as PengaturanRouteImport } from './routes/pengaturan'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as ArsipRouteImport } from './routes/arsip'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SuratIndexRouteImport } from './routes/surat/index'
 
@@ -30,6 +31,11 @@ const DashboardRoute = DashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ArsipRoute = ArsipRouteImport.update({
+  id: '/arsip',
+  path: '/arsip',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -43,6 +49,7 @@ const SuratIndexRoute = SuratIndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/arsip': typeof ArsipRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
   '/pengaturan': typeof PengaturanRoute
@@ -50,6 +57,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/arsip': typeof ArsipRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
   '/pengaturan': typeof PengaturanRoute
@@ -58,6 +66,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/arsip': typeof ArsipRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
   '/pengaturan': typeof PengaturanRoute
@@ -65,14 +74,28 @@ export interface FileRoutesById {
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/dashboard' | '/login' | '/pengaturan' | '/surat/'
+  fullPaths:
+    | '/'
+    | '/arsip'
+    | '/dashboard'
+    | '/login'
+    | '/pengaturan'
+    | '/surat/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard' | '/login' | '/pengaturan' | '/surat'
-  id: '__root__' | '/' | '/dashboard' | '/login' | '/pengaturan' | '/surat/'
+  to: '/' | '/arsip' | '/dashboard' | '/login' | '/pengaturan' | '/surat'
+  id:
+    | '__root__'
+    | '/'
+    | '/arsip'
+    | '/dashboard'
+    | '/login'
+    | '/pengaturan'
+    | '/surat/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ArsipRoute: typeof ArsipRoute
   DashboardRoute: typeof DashboardRoute
   LoginRoute: typeof LoginRoute
   PengaturanRoute: typeof PengaturanRoute
@@ -102,6 +125,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/arsip': {
+      id: '/arsip'
+      path: '/arsip'
+      fullPath: '/arsip'
+      preLoaderRoute: typeof ArsipRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -121,6 +151,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ArsipRoute: ArsipRoute,
   DashboardRoute: DashboardRoute,
   LoginRoute: LoginRoute,
   PengaturanRoute: PengaturanRoute,
