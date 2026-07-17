@@ -99,8 +99,10 @@ export type Database = {
           letter_number: string
           letter_type: string
           number_int: number
+          payload: Json | null
           penutup: string | null
           perihal: string
+          qr_data: string | null
           sekretaris_name: string | null
           status: string
           tanggal_acara: string | null
@@ -108,6 +110,7 @@ export type Database = {
           ttd_ketua_url: string | null
           ttd_sekretaris_url: string | null
           updated_at: string
+          verify_url: string | null
           year: number
         }
         Insert: {
@@ -128,8 +131,10 @@ export type Database = {
           letter_number: string
           letter_type: string
           number_int: number
+          payload?: Json | null
           penutup?: string | null
           perihal: string
+          qr_data?: string | null
           sekretaris_name?: string | null
           status?: string
           tanggal_acara?: string | null
@@ -137,6 +142,7 @@ export type Database = {
           ttd_ketua_url?: string | null
           ttd_sekretaris_url?: string | null
           updated_at?: string
+          verify_url?: string | null
           year: number
         }
         Update: {
@@ -157,8 +163,10 @@ export type Database = {
           letter_number?: string
           letter_type?: string
           number_int?: number
+          payload?: Json | null
           penutup?: string | null
           perihal?: string
+          qr_data?: string | null
           sekretaris_name?: string | null
           status?: string
           tanggal_acara?: string | null
@@ -166,6 +174,7 @@ export type Database = {
           ttd_ketua_url?: string | null
           ttd_sekretaris_url?: string | null
           updated_at?: string
+          verify_url?: string | null
           year?: number
         }
         Relationships: []
