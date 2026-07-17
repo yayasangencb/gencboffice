@@ -15,6 +15,7 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ArsipRouteImport } from './routes/arsip'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SuratIndexRouteImport } from './routes/surat/index'
+import { Route as VerifyIdRouteImport } from './routes/verify.$id'
 
 const PengaturanRoute = PengaturanRouteImport.update({
   id: '/pengaturan',
@@ -46,6 +47,11 @@ const SuratIndexRoute = SuratIndexRouteImport.update({
   path: '/surat/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const VerifyIdRoute = VerifyIdRouteImport.update({
+  id: '/verify/$id',
+  path: '/verify/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -53,6 +59,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
   '/pengaturan': typeof PengaturanRoute
+  '/verify/$id': typeof VerifyIdRoute
   '/surat/': typeof SuratIndexRoute
 }
 export interface FileRoutesByTo {
@@ -61,6 +68,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
   '/pengaturan': typeof PengaturanRoute
+  '/verify/$id': typeof VerifyIdRoute
   '/surat': typeof SuratIndexRoute
 }
 export interface FileRoutesById {
@@ -70,6 +78,7 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
   '/pengaturan': typeof PengaturanRoute
+  '/verify/$id': typeof VerifyIdRoute
   '/surat/': typeof SuratIndexRoute
 }
 export interface FileRouteTypes {
@@ -80,9 +89,17 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/login'
     | '/pengaturan'
+    | '/verify/$id'
     | '/surat/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/arsip' | '/dashboard' | '/login' | '/pengaturan' | '/surat'
+  to:
+    | '/'
+    | '/arsip'
+    | '/dashboard'
+    | '/login'
+    | '/pengaturan'
+    | '/verify/$id'
+    | '/surat'
   id:
     | '__root__'
     | '/'
@@ -90,6 +107,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/login'
     | '/pengaturan'
+    | '/verify/$id'
     | '/surat/'
   fileRoutesById: FileRoutesById
 }
@@ -99,6 +117,7 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   LoginRoute: typeof LoginRoute
   PengaturanRoute: typeof PengaturanRoute
+  VerifyIdRoute: typeof VerifyIdRoute
   SuratIndexRoute: typeof SuratIndexRoute
 }
 
@@ -146,6 +165,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SuratIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/verify/$id': {
+      id: '/verify/$id'
+      path: '/verify/$id'
+      fullPath: '/verify/$id'
+      preLoaderRoute: typeof VerifyIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -155,6 +181,7 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRoute,
   LoginRoute: LoginRoute,
   PengaturanRoute: PengaturanRoute,
+  VerifyIdRoute: VerifyIdRoute,
   SuratIndexRoute: SuratIndexRoute,
 }
 export const routeTree = rootRouteImport
