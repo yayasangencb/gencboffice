@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useMemo, useRef, useState } from "react";
+import { forwardRef, useMemo, useRef, useState } from "react";
 import { Calendar, Clock, MapPin, Download, FileImage, FileText, Loader2 } from "lucide-react";
 import { LOGO_URL, formatIdDate } from "@/lib/brand";
 import { toast } from "sonner";
@@ -205,11 +205,10 @@ type FlayerProps = {
   quote: string;
 };
 
-const FlayerCanvas = (() => {
-  const Comp = (
-    { heading, subheading, title, dayLine, dateLine, timeText, location, quote }: FlayerProps,
-    ref: React.Ref<HTMLDivElement>,
-  ) => {
+const FlayerCanvas = forwardRef<HTMLDivElement, FlayerProps>(function FlayerCanvas(
+  { heading, subheading, title, dayLine, dateLine, timeText, location, quote },
+  ref,
+) {
     const BLUE = "#003B8F";
     const ORANGE = "#FF7A00";
     const locLines = location.split("\n");
@@ -332,10 +331,8 @@ const FlayerCanvas = (() => {
           <path d="M0,210 C320,140 720,250 1080,180" fill="none" stroke={ORANGE} strokeWidth="4" opacity="0.7" />
         </svg>
       </div>
-    );
-  };
-  return (require("react") as typeof import("react")).forwardRef<HTMLDivElement, FlayerProps>(Comp);
-})();
+  );
+});
 
 function InfoItem({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) {
   return (
