@@ -1,6 +1,8 @@
 import { forwardRef } from "react";
 import { LOGO_URL, formatIdDate } from "@/lib/brand";
 import type { Organization } from "@/lib/org";
+import headerImg from "@/assets/letter-header.png.asset.json";
+import footerImg from "@/assets/letter-footer.png.asset.json";
 
 export type LetterData = {
   letter_number: string;
@@ -37,7 +39,7 @@ export const LetterPreview = forwardRef<HTMLDivElement, { data: LetterData; org:
         style={{
           width: "210mm",
           minHeight: "297mm",
-          padding: "22mm 22mm 18mm 22mm",
+          padding: "0 0 40mm 0",
           fontFamily: "'Times New Roman', Times, serif",
           fontSize: "12pt",
           lineHeight: 1.5,
@@ -59,42 +61,15 @@ export const LetterPreview = forwardRef<HTMLDivElement, { data: LetterData; org:
           <img src={logo} alt="" style={{ width: "60%", maxWidth: 500 }} />
         </div>
 
-        {/* Kop / Header */}
-        <header
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 16,
-            borderBottom: "3px double #003B8F",
-            paddingBottom: 8,
-          }}
-        >
-          <img src={logo} alt="Logo" style={{ height: 90, width: 90, objectFit: "contain" }} />
-          {data.extra_logo_url && (
-            <img src={data.extra_logo_url} alt="Logo tambahan" style={{ height: 90, width: 90, objectFit: "contain" }} />
-          )}
-          <div style={{ flex: 1, textAlign: "center" }}>
-            <div style={{ fontSize: "10pt", letterSpacing: 3, color: "#FF7A00", fontWeight: 700 }}>
-              YAYASAN
-            </div>
-            <div style={{ fontSize: "22pt", fontWeight: 900, color: "#003B8F", lineHeight: 1 }}>
-              {org.name.toUpperCase()}
-            </div>
-            <div style={{ fontSize: "10pt", fontStyle: "italic", color: "#003B8F" }}>
-              "Generasi Cerdas Beraksi"
-            </div>
-            <div style={{ fontSize: "9.5pt", marginTop: 4 }}>
-              {org.address}
-              {org.phone && <> · Telp: {org.phone}</>}
-              {org.email && <> · {org.email}</>}
-              {org.website && <> · {org.website}</>}
-            </div>
-          </div>
-        </header>
-        <div style={{ height: 3, background: "#FF7A00", marginTop: 2 }} />
+        {/* Kop / Header image */}
+        <img
+          src={headerImg.url}
+          alt="Kop Surat GEN-CB"
+          style={{ width: "100%", display: "block" }}
+        />
 
         {/* Body */}
-        <div style={{ position: "relative", marginTop: 20 }}>
+        <div style={{ position: "relative", margin: "20px 22mm 0 22mm" }}>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <tbody>
               <tr>
@@ -187,6 +162,14 @@ export const LetterPreview = forwardRef<HTMLDivElement, { data: LetterData; org:
             </div>
           )}
         </div>
+
+        {/* Footer image */}
+        <img
+          src={footerImg.url}
+          alt=""
+          aria-hidden
+          style={{ position: "absolute", left: 0, right: 0, bottom: 0, width: "100%", display: "block" }}
+        />
       </div>
     );
   },
