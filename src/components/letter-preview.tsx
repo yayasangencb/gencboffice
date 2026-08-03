@@ -1,8 +1,6 @@
 import { forwardRef } from "react";
 import { LOGO_URL, formatIdDate } from "@/lib/brand";
 import type { Organization } from "@/lib/org";
-import headerImg from "@/assets/letter-header.png.asset.json";
-import footerImg from "@/assets/letter-footer.png.asset.json";
 
 export type LetterData = {
   letter_number: string;
@@ -63,7 +61,7 @@ export const LetterPreview = forwardRef<HTMLDivElement, { data: LetterData; org:
 
         {/* Kop / Header image */}
         <img
-          src={headerImg.url}
+          src="/letter-header.png"
           alt="Kop Surat GEN-CB"
           style={{ width: "100%", display: "block" }}
         />
@@ -152,8 +150,9 @@ export const LetterPreview = forwardRef<HTMLDivElement, { data: LetterData; org:
             <SignBlock title={data.jabatan || "Ketua"} name={data.ketua_name} img={data.ttd_ketua_url} />
           </div>
 
+          {/* QR Code Verification (Moved to Bottom Right) */}
           {data.qr_data_url && (
-            <div style={{ position: "absolute", left: 0, bottom: -60, display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{ position: "absolute", right: 0, bottom: -60, display: "flex", alignItems: "center", gap: 8, flexDirection: "row-reverse", textAlign: "right" }}>
               <img src={data.qr_data_url} alt="QR" style={{ height: 72, width: 72 }} />
               <div style={{ fontSize: "8pt", color: "#555", lineHeight: 1.3 }}>
                 Verifikasi keabsahan surat<br />
@@ -165,7 +164,7 @@ export const LetterPreview = forwardRef<HTMLDivElement, { data: LetterData; org:
 
         {/* Footer image */}
         <img
-          src={footerImg.url}
+          src="/letter-footer.png"
           alt=""
           aria-hidden
           style={{ position: "absolute", left: 0, right: 0, bottom: 0, width: "100%", display: "block" }}
