@@ -116,26 +116,92 @@ function SettingsPage() {
 }
 
 function ImageField({
-  label, value, onFile, onClear,
-}: { label: string; value: string; onFile: (f: File | null) => void; onClear: () => void }) {
+  label,
+  value,
+  onFile,
+  onClear,
+}: {
+  label: string;
+  value: string;
+  onFile: (f: File | null) => void;
+  onClear: () => void;
+}) {
+  const [isDragging, setIsDragging] = useState(false);
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      onFile(e.dataTransfer.files[0]);
+    }
+  };
+
   return (
     <div className="space-y-2">
       <Label>{label}</Label>
-      <div className="flex items-center gap-3">
-        <div className="h-16 w-16 rounded-md border bg-muted grid place-items-center overflow-hidden">
-          {value ? <img src={value} alt="" className="h-full w-full object-contain" /> : <Upload className="h-5 w-5 text-muted-foreground" />}
-        </div>
-        <div className="flex flex-col gap-1">
-          <label className="cursor-pointer text-sm text-primary hover:underline">
-            {value ? "Ganti gambar" : "Upload gambar"}
-            <input type="file" accept="image/*" className="hidden" onChange={(e) => onFile(e.target.files?.[0] ?? null)} />
-          </label>
-          {value && (
-            <button type="button" className="text-xs text-muted-foreground hover:text-destructive" onClick={onClear}>
-              Hapus
-            </button>
-          )}
-        </div>
+      <div
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+        className={`relative flex flex-col items-center justify-center p-4 rounded-xl border-2 border-dashed transition-all cursor-pointer ${
+          isDragging
+            ? "border-primary bg-primary/10 scale-[1.01]"
+            : value
+              ? "border-border bg-card hover:border-primary/50"
+              : "border-muted-foreground/30 bg-muted/40 hover:bg-muted/70 hover:border-primary/50"
+        }`}
+      >
+        <input
+          type="file"
+          accept="image/*"
+          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+          onChange={(e) => onFile(e.target.files?.[0] ?? null)}
+        />
+        {value ? (
+          <div className="flex flex-col items-center gap-2">
+            <div className="h-20 w-32 rounded-lg border bg-white/90 p-1 flex items-center justify-center overflow-hidden shadow-sm">
+              <img src={value} alt={label} className="max-h-full max-w-full object-contain" />
+            </div>
+            <div className="flex items-center gap-2 z-10">
+              <span className="text-xs text-muted-foreground">Klik atau drag gambar baru untuk mengganti</span>
+              <button
+                type="button"
+                className="text-xs text-destructive hover:underline font-medium"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onClear();
+                }}
+              >
+                Hapus
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center gap-1.5 text-center py-2">
+            <div className="p-2.5 rounded-full bg-primary/10 text-primary">
+              <Upload className="h-5 w-5" />
+            </div>
+            <p className="text-xs font-semibold text-foreground">
+              {isDragging ? "Lepaskan file di sini" : "Drag & Drop gambar di sini"}
+            </p>
+            <p className="text-[11px] text-muted-foreground">
+              atau <span className="text-primary font-medium underline">Pilih file</span> (PNG, JPG, maks 2MB)
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

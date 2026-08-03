@@ -183,6 +183,35 @@ export async function generateLetterDocx(data: LetterData, org: Organization): P
   return await Packer.toBlob(doc);
 }
 
+export function sanitizeClonedDocForCanvas(clonedDoc: Document) {
+  const styleElements = clonedDoc.querySelectorAll("style");
+  styleElements.forEach((style) => {
+    if (style.textContent && style.textContent.includes("oklch")) {
+      style.textContent = style.textContent
+        .replace(/oklch\(0\.36[^)]+\)/gi, "#003B8F")
+        .replace(/oklch\(0\.72[^)]+\)/gi, "#FF7A00")
+        .replace(/oklch\(0\.99[^)]+\)/gi, "#FAFBFD")
+        .replace(/oklch\(0\.2[^)]+\)/gi, "#1A202C")
+        .replace(/oklch\(1 0 0[^)]+\)/gi, "#FFFFFF")
+        .replace(/oklch\([^)]+\)/gi, "#003B8F");
+    }
+  });
+
+  const allElements = clonedDoc.querySelectorAll("*");
+  allElements.forEach((el) => {
+    const htmlEl = el as HTMLElement;
+    if (htmlEl.style && htmlEl.style.cssText && htmlEl.style.cssText.includes("oklch")) {
+      htmlEl.style.cssText = htmlEl.style.cssText
+        .replace(/oklch\(0\.36[^)]+\)/gi, "#003B8F")
+        .replace(/oklch\(0\.72[^)]+\)/gi, "#FF7A00")
+        .replace(/oklch\(0\.99[^)]+\)/gi, "#FAFBFD")
+        .replace(/oklch\(0\.2[^)]+\)/gi, "#1A202C")
+        .replace(/oklch\(1 0 0[^)]+\)/gi, "#FFFFFF")
+        .replace(/oklch\([^)]+\)/gi, "#003B8F");
+    }
+  });
+}
+
 export async function generateLetterPdf(el: HTMLElement, fileName: string) {
   const [{ default: html2canvas }, jsPDFmod] = await Promise.all([
     import("html2canvas"),
@@ -193,6 +222,9 @@ export async function generateLetterPdf(el: HTMLElement, fileName: string) {
     scale: 2,
     useCORS: true,
     backgroundColor: "#ffffff",
+    onclone: (clonedDoc) => {
+      sanitizeClonedDocForCanvas(clonedDoc);
+    },
   });
   const imgData = canvas.toDataURL("image/jpeg", 0.95);
   const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });

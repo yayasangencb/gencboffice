@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
 import { RequireAuth } from "@/components/app-shell";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -16,11 +16,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sparkles, FileDown, Printer, FileText, Loader2, RefreshCcw } from "lucide-react";
+import { Sparkles, FileDown, Printer, FileText, Loader2, RefreshCcw, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import QRCode from "qrcode";
+import { z } from "zod";
+
+const searchSchema = z.object({
+  id: z.string().optional(),
+});
 
 export const Route = createFileRoute("/surat/")({
+  validateSearch: searchSchema,
   head: () => ({ meta: [{ title: "Generator Surat — GEN-CB Office" }] }),
   component: () => (
     <RequireAuth>
@@ -33,7 +39,30 @@ function todayISO() {
   return new Date().toISOString().slice(0, 10);
 }
 
+const DEFAULT_FORM = {
+  lampiran: "",
+  perihal: "",
+  kepada: "",
+  instansi: "",
+  alamat: "",
+  isi_surat: "",
+  hari: "",
+  tanggal_acara: "",
+  jam: "",
+  tempat: "",
+  tempat_surat: "",
+  penutup:
+    "Demikian surat ini kami sampaikan. Atas perhatian dan kerja samanya, kami ucapkan terima kasih.",
+  jabatan: "Ketua",
+};
+
+const DRAFT_KEY = "gencb_surat_draft";
+
 function SuratPage() {
+  const search = useSearch({ from: "/surat/" });
+  const navigate = useNavigate();
+  const editId = search.id;
+
   const { data: org } = useQuery({ queryKey: ["org"], queryFn: fetchOrganization });
   const genAI = useServerFn(generateLetterContent);
   const reserve = useServerFn(reserveLetterNumber);
@@ -41,49 +70,132 @@ function SuratPage() {
 
   const [typeCode, setTypeCode] = useState<string>("UND");
   const [letterDate, setLetterDate] = useState(todayISO());
+  const [customLetterNumber, setCustomLetterNumber] = useState<string>("");
   const [reserved, setReserved] = useState<{ num: number; year: number } | null>(null);
   const [aiPrompt, setAiPrompt] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState<null | "pdf" | "docx">(null);
   const [qr, setQr] = useState<string>("");
-  const [savedId, setSavedId] = useState<string | null>(null);
+  const [savedId, setSavedId] = useState<string | null>(editId ?? null);
+  const [isLoaded, setIsLoaded] = useState(false);
 
-  const [form, setForm] = useState({
-    lampiran: "",
-    perihal: "",
-    kepada: "",
-    instansi: "",
-    alamat: "",
-    isi_surat: "",
-    hari: "",
-    tanggal_acara: "",
-    jam: "",
-    tempat: "",
-    tempat_surat: "",
-    penutup:
-      "Demikian surat ini kami sampaikan. Atas perhatian dan kerja samanya, kami ucapkan terima kasih.",
-    jabatan: "Ketua",
-  });
+  const [form, setForm] = useState(DEFAULT_FORM);
   const upd = <K extends keyof typeof form>(k: K, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
-  const letterNumber = useMemo(() => {
-    if (!reserved) return `(belum di-reserve)/${typeCode}/GEN-CB/-/-`;
-    return formatLetterNumber(reserved.num, typeCode, new Date(letterDate));
+  // Load edit item from Supabase or load session draft from localStorage
+  useEffect(() => {
+    async function loadData() {
+      if (editId) {
+        try {
+          const { data, error } = await supabase
+            .from("letters" as never)
+            .select("*" as never)
+            .eq("id" as never, editId as never)
+            .single();
+          if (error) throw error;
+          const letter = data as any;
+          if (letter) {
+            setSavedId(letter.id);
+            setTypeCode(letter.letter_type || "UND");
+            setLetterDate(letter.letter_date || todayISO());
+            setCustomLetterNumber(letter.letter_number || "");
+            if (letter.number_int) {
+              setReserved({ num: letter.number_int, year: letter.year || new Date(letter.letter_date).getFullYear() });
+            }
+            if (letter.qr_data) setQr(letter.qr_data);
+            const p = letter.payload || {};
+            setForm({
+              lampiran: letter.lampiran || "",
+              perihal: letter.perihal || "",
+              kepada: letter.kepada || "",
+              instansi: letter.instansi || "",
+              alamat: letter.alamat || "",
+              isi_surat: letter.isi_surat || "",
+              hari: letter.hari || "",
+              tanggal_acara: letter.tanggal_acara || "",
+              jam: letter.jam || "",
+              tempat: letter.tempat || "",
+              tempat_surat: p.tempat_surat || "",
+              penutup: letter.penutup || DEFAULT_FORM.penutup,
+              jabatan: letter.jabatan || "Ketua",
+            });
+            toast.info("Surat dari arsip berhasil dimuat untuk diedit");
+          }
+        } catch (e) {
+          toast.error("Gagal memuat surat dari arsip: " + (e as Error).message);
+        }
+      } else {
+        // Load draft from localStorage
+        const savedDraft = localStorage.getItem(DRAFT_KEY);
+        if (savedDraft) {
+          try {
+            const parsed = JSON.parse(savedDraft);
+            if (parsed.typeCode) setTypeCode(parsed.typeCode);
+            if (parsed.letterDate) setLetterDate(parsed.letterDate);
+            if (parsed.customLetterNumber) setCustomLetterNumber(parsed.customLetterNumber);
+            if (parsed.reserved) setReserved(parsed.reserved);
+            if (parsed.aiPrompt) setAiPrompt(parsed.aiPrompt);
+            if (parsed.form) setForm(parsed.form);
+          } catch {
+            // ignore JSON parse error
+          }
+        }
+      }
+      setIsLoaded(true);
+    }
+    loadData();
+  }, [editId]);
+
+  // Save session draft automatically to localStorage when non-edit form changes
+  useEffect(() => {
+    if (!isLoaded || editId) return;
+    const draftPayload = {
+      typeCode,
+      letterDate,
+      customLetterNumber,
+      reserved,
+      aiPrompt,
+      form,
+    };
+    localStorage.setItem(DRAFT_KEY, JSON.stringify(draftPayload));
+  }, [isLoaded, editId, typeCode, letterDate, customLetterNumber, reserved, aiPrompt, form]);
+
+  const defaultGeneratedNumber = useMemo(() => {
+    if (reserved) return formatLetterNumber(reserved.num, typeCode, new Date(letterDate));
+    return formatLetterNumber(1, typeCode, new Date(letterDate));
   }, [reserved, typeCode, letterDate]);
+
+  const letterNumber = customLetterNumber.trim() || defaultGeneratedNumber;
 
   const doReserve = async () => {
     try {
       const y = new Date(letterDate).getFullYear();
       const res = await reserve({ data: { year: y } });
+      const formatted = formatLetterNumber(res.number, typeCode, new Date(letterDate));
       setReserved({ num: res.number, year: y });
-      toast.success(`Nomor tersedia: ${String(res.number).padStart(3, "0")}`);
+      setCustomLetterNumber(formatted);
+      toast.success(`Nomor otomatis di-reserve: ${String(res.number).padStart(3, "0")}`);
     } catch (e) {
       toast.error((e as Error).message);
     }
   };
 
-  useEffect(() => { if (!reserved) doReserve(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, []);
+  const resetForm = () => {
+    setForm(DEFAULT_FORM);
+    setTypeCode("UND");
+    setLetterDate(todayISO());
+    setCustomLetterNumber("");
+    setReserved(null);
+    setAiPrompt("");
+    setSavedId(null);
+    setQr("");
+    localStorage.removeItem(DRAFT_KEY);
+    if (editId) {
+      navigate({ to: "/surat", search: {} });
+    }
+    toast.success("Form & draft dibersihkan");
+  };
 
   const runAI = async () => {
     if (!aiPrompt.trim()) return toast.error("Tulis dulu maksud suratnya");
@@ -128,14 +240,17 @@ function SuratPage() {
 
   const saveArchive = async (): Promise<string | null> => {
     if (!org) return null;
-    if (!reserved) { toast.error("Nomor surat belum di-reserve"); return null; }
     if (!form.perihal || !form.isi_surat) { toast.error("Perihal & isi surat wajib diisi"); return null; }
     setSaving(true);
     try {
+      const parsedNum = parseInt(letterNumber.split("/")[0], 10);
+      const numberInt = reserved?.num ?? (isNaN(parsedNum) ? 0 : parsedNum);
+      const yearVal = reserved?.year ?? new Date(letterDate).getFullYear();
+
       const payload = {
         letter_number: letterNumber,
-        number_int: reserved.num,
-        year: reserved.year,
+        number_int: numberInt,
+        year: yearVal,
         letter_type: typeCode,
         letter_date: letterDate,
         perihal: form.perihal,
@@ -211,10 +326,17 @@ function SuratPage() {
     <div className="mx-auto max-w-[1400px] px-4 py-6">
       <div className="flex flex-wrap items-end justify-between gap-3 mb-5">
         <div>
-          <h1 className="text-2xl md:text-3xl font-black tracking-tight">Generator Surat</h1>
-          <p className="text-sm text-muted-foreground">Buat surat resmi GEN-CB dengan penomoran otomatis & bantuan AI.</p>
+          <h1 className="text-2xl md:text-3xl font-black tracking-tight">
+            {savedId ? "Edit Surat Arsip" : "Generator Surat"}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            {savedId ? "Mengubah data surat yang tersimpan di Arsip." : "Buat surat resmi GEN-CB dengan penomoran otomatis/manual & bantuan AI."}
+          </p>
         </div>
-        <div className="flex flex-wrap gap-2 no-print">
+        <div className="flex flex-wrap items-center gap-2 no-print">
+          <Button variant="ghost" size="sm" onClick={resetForm} title="Reset Form / Buat Surat Baru">
+            <RotateCcw className="h-4 w-4 mr-1" /> Reset Form
+          </Button>
           <Button variant="outline" onClick={doPrint}><Printer className="h-4 w-4 mr-1" /> Print</Button>
           <Button variant="outline" disabled={exporting !== null} onClick={exportDOCX}>
             {exporting === "docx" ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <FileText className="h-4 w-4 mr-1" />} DOCX
@@ -245,13 +367,25 @@ function SuratPage() {
                   <Input type="date" value={letterDate} onChange={(e) => setLetterDate(e.target.value)} />
                 </div>
               </div>
-              <div className="rounded-md border bg-muted/40 p-2 flex items-center justify-between">
-                <div className="text-xs">
-                  <div className="text-muted-foreground">Nomor Surat</div>
-                  <div className="font-mono font-semibold">{letterNumber}</div>
+
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs">Nomor Surat (Atur Manual / Otomatis)</Label>
+                  <Button type="button" size="sm" variant="ghost" className="h-6 text-[11px] px-2 text-primary" onClick={doReserve}>
+                    <RefreshCcw className="h-3 w-3 mr-1" /> Ambil Nomor Otomatis
+                  </Button>
                 </div>
-                <Button size="sm" variant="ghost" onClick={doReserve}><RefreshCcw className="h-4 w-4" /></Button>
+                <Input
+                  value={customLetterNumber}
+                  onChange={(e) => setCustomLetterNumber(e.target.value)}
+                  placeholder={defaultGeneratedNumber}
+                  className="font-mono text-sm"
+                />
+                <p className="text-[11px] text-muted-foreground">
+                  Bisa diisi manual atau klik "Ambil Nomor Otomatis".
+                </p>
               </div>
+
               <div className="space-y-1.5">
                 <Label>Perihal</Label>
                 <Input value={form.perihal} onChange={(e) => upd("perihal", e.target.value)} placeholder="Undangan Rapat Koordinasi" />
