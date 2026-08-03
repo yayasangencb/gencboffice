@@ -73,7 +73,7 @@ export const LetterPreview = forwardRef<HTMLDivElement, { data: LetterData; org:
         />
 
         {/* Body */}
-        <div style={{ position: "relative", margin: "20px 22mm 0 22mm" }}>
+        <div style={{ position: "relative", zIndex: 2, margin: "20px 22mm 0 22mm" }}>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <tbody>
               <tr>
@@ -168,13 +168,13 @@ export const LetterPreview = forwardRef<HTMLDivElement, { data: LetterData; org:
           )}
         </div>
 
-        {/* Footer image */}
+        {/* Footer image (Behind Text) */}
         <img
           src={footerImg}
           alt=""
           aria-hidden
           crossOrigin="anonymous"
-          style={{ position: "absolute", left: 0, right: 0, bottom: 0, width: "100%", height: "auto", display: "block" }}
+          style={{ position: "absolute", left: 0, right: 0, bottom: 0, width: "100%", height: "auto", display: "block", zIndex: 0, pointerEvents: "none" }}
         />
       </div>
     );
