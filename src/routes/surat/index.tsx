@@ -272,6 +272,21 @@ function SuratPage() {
         payload: letterData as unknown,
       };
       let id = savedId;
+
+      // If id is not set, check if letter_number already exists in database
+      if (!id) {
+        const { data: existing } = await supabase
+          .from("letters" as never)
+          .select("id" as never)
+          .eq("letter_number" as never, letterNumber as never)
+          .maybeSingle();
+
+        if (existing) {
+          id = (existing as { id: string }).id;
+          setSavedId(id);
+        }
+      }
+
       if (id) {
         const { error } = await supabase.from("letters" as never).update(payload as never).eq("id", id);
         if (error) throw error;
@@ -288,7 +303,12 @@ function SuratPage() {
       toast.success("Surat tersimpan di Arsip");
       return id;
     } catch (e) {
-      toast.error((e as Error).message);
+      const msg = (e as Error).message || "";
+      if (msg.includes("letters_letter_number_key") || msg.includes("unique constraint")) {
+        toast.error(`Nomor surat "${letterNumber}" sudah pernah digunakan. Silakan gunakan nomor lain atau klik 'Ambil Nomor Otomatis'.`);
+      } else {
+        toast.error(msg);
+      }
       return null;
     } finally {
       setSaving(false);
