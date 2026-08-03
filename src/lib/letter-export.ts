@@ -308,25 +308,68 @@ export async function renderElementToCanvas(
   }
 }
 
+export async function renderLetterToCanvas(el: HTMLElement): Promise<HTMLCanvasElement> {
+  const { default: html2canvas } = await import("html2canvas");
+
+  const container = document.createElement("div");
+  container.style.position = "fixed";
+  container.style.left = "-9999px";
+  container.style.top = "0";
+  container.style.width = "210mm";
+  container.style.height = "297mm";
+  container.style.overflow = "hidden";
+  container.style.backgroundColor = "#ffffff";
+  container.style.zIndex = "-9999";
+
+  const clone = el.cloneNode(true) as HTMLElement;
+  clone.style.transform = "none";
+  clone.style.width = "210mm";
+  clone.style.height = "297mm";
+  clone.style.position = "relative";
+  clone.style.margin = "0";
+
+  container.appendChild(clone);
+  document.body.appendChild(container);
+
+  const imgs = Array.from(clone.querySelectorAll("img"));
+  await Promise.all(
+    imgs.map((img) => {
+      if (img.complete && img.naturalWidth !== 0) return Promise.resolve();
+      return new Promise<void>((resolve) => {
+        img.onload = () => resolve();
+        img.onerror = () => resolve();
+      });
+    })
+  );
+
+  try {
+    const canvas = await html2canvas(clone, {
+      scale: 3,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: "#ffffff",
+      logging: false,
+      onclone: (clonedDoc) => {
+        sanitizeClonedDocForCanvas(clonedDoc);
+      },
+    });
+    return canvas;
+  } catch (e) {
+    console.warn("html2canvas render failed, fallback to SVG foreignObject:", e);
+    return await renderSvgForeignObjectToCanvas(el, { width: 794, height: 1123 });
+  } finally {
+    if (document.body.contains(container)) {
+      document.body.removeChild(container);
+    }
+  }
+}
+
 export async function generateLetterPdf(el: HTMLElement, fileName: string) {
   const { default: jsPDF } = await import("jspdf");
-  const canvas = await renderElementToCanvas(el);
-  const imgData = canvas.toDataURL("image/jpeg", 0.95);
+  const canvas = await renderLetterToCanvas(el);
+  const imgData = canvas.toDataURL("image/jpeg", 0.98);
   const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
-  const pageW = pdf.internal.pageSize.getWidth();
-  const pageH = pdf.internal.pageSize.getHeight();
-  const imgW = pageW;
-  const imgH = (canvas.height * imgW) / canvas.width;
-  let heightLeft = imgH;
-  let position = 0;
-  pdf.addImage(imgData, "JPEG", 0, position, imgW, imgH);
-  heightLeft -= pageH;
-  while (heightLeft > 0) {
-    position = heightLeft - imgH;
-    pdf.addPage();
-    pdf.addImage(imgData, "JPEG", 0, position, imgW, imgH);
-    heightLeft -= pageH;
-  }
+  pdf.addImage(imgData, "JPEG", 0, 0, 210, 297);
   pdf.save(fileName);
 }
 

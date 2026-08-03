@@ -1,6 +1,8 @@
 import { forwardRef } from "react";
 import { LOGO_URL, formatIdDate } from "@/lib/brand";
 import type { Organization } from "@/lib/org";
+import headerImg from "@/assets/letter-header.png";
+import footerImg from "@/assets/letter-footer.png";
 
 export type LetterData = {
   letter_number: string;
@@ -37,11 +39,14 @@ export const LetterPreview = forwardRef<HTMLDivElement, { data: LetterData; org:
         style={{
           width: "210mm",
           minHeight: "297mm",
+          height: "297mm",
           padding: "0 0 40mm 0",
           fontFamily: "'Times New Roman', Times, serif",
           fontSize: "12pt",
           lineHeight: 1.5,
           boxSizing: "border-box",
+          position: "relative",
+          backgroundColor: "#ffffff",
         }}
       >
         {/* Watermark */}
@@ -61,9 +66,10 @@ export const LetterPreview = forwardRef<HTMLDivElement, { data: LetterData; org:
 
         {/* Kop / Header image */}
         <img
-          src="/letter-header.png"
+          src={headerImg}
           alt="Kop Surat GEN-CB"
-          style={{ width: "100%", display: "block" }}
+          crossOrigin="anonymous"
+          style={{ width: "100%", height: "auto", display: "block" }}
         />
 
         {/* Body */}
@@ -164,10 +170,11 @@ export const LetterPreview = forwardRef<HTMLDivElement, { data: LetterData; org:
 
         {/* Footer image */}
         <img
-          src="/letter-footer.png"
+          src={footerImg}
           alt=""
           aria-hidden
-          style={{ position: "absolute", left: 0, right: 0, bottom: 0, width: "100%", display: "block" }}
+          crossOrigin="anonymous"
+          style={{ position: "absolute", left: 0, right: 0, bottom: 0, width: "100%", height: "auto", display: "block" }}
         />
       </div>
     );
