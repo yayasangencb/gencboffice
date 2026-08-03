@@ -184,16 +184,21 @@ export async function generateLetterDocx(data: LetterData, org: Organization): P
 }
 
 export function sanitizeClonedDocForCanvas(clonedDoc: Document) {
+  const linkElements = clonedDoc.querySelectorAll("link[rel='stylesheet']");
+  linkElements.forEach((link) => link.remove());
+
   const styleElements = clonedDoc.querySelectorAll("style");
   styleElements.forEach((style) => {
-    if (style.textContent && style.textContent.includes("oklch")) {
+    if (style.textContent) {
       style.textContent = style.textContent
-        .replace(/oklch\(0\.36[^)]+\)/gi, "#003B8F")
-        .replace(/oklch\(0\.72[^)]+\)/gi, "#FF7A00")
-        .replace(/oklch\(0\.99[^)]+\)/gi, "#FAFBFD")
-        .replace(/oklch\(0\.2[^)]+\)/gi, "#1A202C")
-        .replace(/oklch\(1 0 0[^)]+\)/gi, "#FFFFFF")
-        .replace(/oklch\([^)]+\)/gi, "#003B8F");
+        .replace(/oklch\([^)]+\)/gi, (match) => {
+          if (match.includes("0.36")) return "#003B8F";
+          if (match.includes("0.72")) return "#FF7A00";
+          if (match.includes("0.99")) return "#FAFBFD";
+          if (match.includes("0.2")) return "#1A202C";
+          if (match.includes("1 0 0")) return "#FFFFFF";
+          return "#003B8F";
+        });
     }
   });
 
@@ -201,31 +206,111 @@ export function sanitizeClonedDocForCanvas(clonedDoc: Document) {
   allElements.forEach((el) => {
     const htmlEl = el as HTMLElement;
     if (htmlEl.style && htmlEl.style.cssText && htmlEl.style.cssText.includes("oklch")) {
-      htmlEl.style.cssText = htmlEl.style.cssText
-        .replace(/oklch\(0\.36[^)]+\)/gi, "#003B8F")
-        .replace(/oklch\(0\.72[^)]+\)/gi, "#FF7A00")
-        .replace(/oklch\(0\.99[^)]+\)/gi, "#FAFBFD")
-        .replace(/oklch\(0\.2[^)]+\)/gi, "#1A202C")
-        .replace(/oklch\(1 0 0[^)]+\)/gi, "#FFFFFF")
-        .replace(/oklch\([^)]+\)/gi, "#003B8F");
+      htmlEl.style.cssText = htmlEl.style.cssText.replace(/oklch\([^)]+\)/gi, "#003B8F");
     }
   });
 }
 
-export async function generateLetterPdf(el: HTMLElement, fileName: string) {
-  const [{ default: html2canvas }, jsPDFmod] = await Promise.all([
-    import("html2canvas"),
-    import("jspdf"),
-  ]);
-  const jsPDF = jsPDFmod.default;
-  const canvas = await html2canvas(el, {
-    scale: 2,
-    useCORS: true,
-    backgroundColor: "#ffffff",
-    onclone: (clonedDoc) => {
-      sanitizeClonedDocForCanvas(clonedDoc);
-    },
+export async function renderSvgForeignObjectToCanvas(
+  el: HTMLElement,
+  opts?: { width?: number; height?: number }
+): Promise<HTMLCanvasElement> {
+  const width = opts?.width || el.offsetWidth || 1080;
+  const height = opts?.height || el.offsetHeight || 1350;
+
+  const clone = el.cloneNode(true) as HTMLElement;
+  clone.style.transform = "none";
+  clone.style.margin = "0";
+  clone.style.position = "static";
+
+  const imgs = clone.querySelectorAll("img");
+  for (let i = 0; i < imgs.length; i++) {
+    const img = imgs[i];
+    if (img.src && !img.src.startsWith("data:")) {
+      try {
+        const res = await fetch(img.src);
+        const blob = await res.blob();
+        await new Promise<void>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            img.src = reader.result as string;
+            resolve();
+          };
+          reader.readAsDataURL(blob);
+        });
+      } catch {
+        // Keep original src if fetch fails
+      }
+    }
+  }
+
+  const serialized = new XMLSerializer().serializeToString(clone);
+  const svgString = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
+    <foreignObject width="100%" height="100%">
+      <div xmlns="http://www.w3.org/1999/xhtml">
+        ${serialized}
+      </div>
+    </foreignObject>
+  </svg>`;
+
+  const canvas = document.createElement("canvas");
+  canvas.width = width * 2;
+  canvas.height = height * 2;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Canvas context not available");
+
+  const img = new Image();
+  const svgBlob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
+  const url = URL.createObjectURL(svgBlob);
+
+  await new Promise<void>((resolve, reject) => {
+    img.onload = () => {
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      URL.revokeObjectURL(url);
+      resolve();
+    };
+    img.onerror = (e) => {
+      URL.revokeObjectURL(url);
+      reject(e);
+    };
+    img.src = url;
   });
+
+  return canvas;
+}
+
+export async function renderElementToCanvas(
+  el: HTMLElement,
+  opts?: { width?: number; height?: number }
+): Promise<HTMLCanvasElement> {
+  try {
+    const { default: html2canvas } = await import("html2canvas");
+    return await html2canvas(el, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: "#ffffff",
+      onclone: (clonedDoc) => {
+        sanitizeClonedDocForCanvas(clonedDoc);
+        const elementsWithTransform = clonedDoc.querySelectorAll("*");
+        elementsWithTransform.forEach((node) => {
+          const htmlNode = node as HTMLElement;
+          if (htmlNode.style && htmlNode.style.transform && htmlNode.style.transform.includes("scale")) {
+            htmlNode.style.transform = "none";
+          }
+        });
+      },
+    });
+  } catch (err) {
+    console.warn("html2canvas error, using SVG foreignObject fallback:", err);
+    return await renderSvgForeignObjectToCanvas(el, opts);
+  }
+}
+
+export async function generateLetterPdf(el: HTMLElement, fileName: string) {
+  const { default: jsPDF } = await import("jspdf");
+  const canvas = await renderElementToCanvas(el);
   const imgData = canvas.toDataURL("image/jpeg", 0.95);
   const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
   const pageW = pdf.internal.pageSize.getWidth();

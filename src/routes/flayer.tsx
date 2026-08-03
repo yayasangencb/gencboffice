@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { forwardRef, useMemo, useRef, useState } from "react";
 import { Calendar, Clock, MapPin, Download, FileImage, FileText, Loader2 } from "lucide-react";
 import { LOGO_URL, formatIdDate } from "@/lib/brand";
-import { sanitizeClonedDocForCanvas } from "@/lib/letter-export";
+import { renderElementToCanvas } from "@/lib/letter-export";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/flayer")({
@@ -45,22 +45,7 @@ function FlayerPage() {
   async function renderCanvas() {
     const el = previewRef.current;
     if (!el) throw new Error("preview not ready");
-    const { default: html2canvas } = await import("html2canvas");
-    return await html2canvas(el, {
-      scale: 2,
-      useCORS: true,
-      backgroundColor: "#ffffff",
-      onclone: (clonedDoc) => {
-        sanitizeClonedDocForCanvas(clonedDoc);
-        const elementsWithTransform = clonedDoc.querySelectorAll("*");
-        elementsWithTransform.forEach((node) => {
-          const htmlNode = node as HTMLElement;
-          if (htmlNode.style && htmlNode.style.transform && htmlNode.style.transform.includes("scale")) {
-            htmlNode.style.transform = "none";
-          }
-        });
-      },
-    });
+    return await renderElementToCanvas(el, { width: 1080, height: 1350 });
   }
 
   async function exportImg(type: "png" | "jpg") {
