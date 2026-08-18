@@ -14,6 +14,14 @@ export const Route = createFileRoute("/dashboard")({
 
 const cards = [
   {
+    to: "/kalender",
+    title: "Kalender Acara GEN-CB",
+    desc: "Lihat tanggal rapat dan acara resmi organisasi.",
+    icon: CalendarDays,
+    tone: "brand" as const,
+    emoji: "📆",
+  },
+  {
     to: "/rapat",
     title: "Modul Rapat GEN-CB",
     desc: "Kelola agenda rapat, pembuatan flyer otomatis, dan notulen.",
@@ -28,6 +36,14 @@ const cards = [
     icon: FileText,
     tone: "accent" as const,
     emoji: "🎟️",
+  },
+  {
+    to: "/rapat/pengajuan",
+    title: "Pengajuan Rapat Baru",
+    desc: "Pengurus dapat mengajukan usulan rapat ke Admin GEN-CB.",
+    icon: CheckSquare,
+    tone: "accent" as const,
+    emoji: "💡",
   },
   {
     to: "/scan-qr",

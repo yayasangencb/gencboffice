@@ -17,6 +17,9 @@ import {
   ShieldCheck,
   User,
   ChevronDown,
+  Bell,
+  Sparkles,
+  Calendar as CalendarIcon,
 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/lib/auth";
@@ -31,20 +34,49 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { logout, user, role, allProfiles, switchProfile } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [open, setOpen] = useState(false);
 
   const isAdmin = role === "ADMIN";
 
+  // Fetch Notifications
+  const { data: notifications } = useQuery({
+    queryKey: ["notifications", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const { data } = await supabase
+        .from("notifications")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(10);
+      return data || [];
+    },
+    enabled: !!user?.id,
+  });
+
+  const unreadCount = (notifications || []).filter((n) => !n.is_read).length;
+
+  const markAllRead = async () => {
+    if (!user?.id) return;
+    await supabase.from("notifications").update({ is_read: true }).eq("user_id", user.id);
+    queryClient.invalidateQueries({ queryKey: ["notifications", user.id] });
+  };
+
   const mainNav = [
     { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { to: "/kalender", label: "Kalender GEN-CB", icon: CalendarIcon },
     { to: "/rapat", label: "Modul Rapat", icon: CalendarDays },
     { to: "/undangan", label: "Undangan Rapat", icon: FileText },
+    ...(!isAdmin ? [{ to: "/rapat/pengajuan", label: "Ajukan Rapat", icon: Sparkles }] : []),
     ...(isAdmin ? [{ to: "/scan-qr", label: "Scan QR", icon: QrCode }] : []),
     { to: "/tugas", label: "Tugas Saya", icon: CheckSquare },
     { to: "/riwayat-kehadiran", label: "Riwayat", icon: History },
@@ -111,8 +143,40 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             })}
           </nav>
 
-          {/* User Profile & Role Switcher */}
+          {/* User Profile & Notifications */}
           <div className="ml-auto flex items-center gap-2">
+            {/* Notification Bell Dropdown */}
+            <DropdownMenu onOpenChange={(open) => open && markAllRead()}>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="relative h-9 w-9 p-0 rounded-full">
+                  <Bell className="h-4 w-4 text-foreground/80" />
+                  {unreadCount > 0 && (
+                    <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-card" />
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-80 p-2">
+                <DropdownMenuLabel className="font-bold text-xs uppercase tracking-wide text-muted-foreground flex justify-between items-center">
+                  <span>Notifikasi Rapat</span>
+                  {unreadCount > 0 && <Badge variant="destructive" className="text-[9px] px-1 py-0">{unreadCount} Baru</Badge>}
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {!notifications || notifications.length === 0 ? (
+                  <div className="p-4 text-center text-xs text-muted-foreground">Belum ada notifikasi.</div>
+                ) : (
+                  <div className="space-y-1.5 max-h-64 overflow-y-auto">
+                    {notifications.map((n) => (
+                      <div key={n.id} className={`p-2.5 rounded-lg text-xs space-y-0.5 ${n.is_read ? "bg-card" : "bg-primary/5 font-semibold"}`}>
+                        <div className="font-bold text-primary">{n.title}</div>
+                        <div className="text-muted-foreground leading-snug">{n.message}</div>
+                        <div className="text-[9px] font-mono text-muted-foreground">{new Date(n.created_at).toLocaleString("id-ID")}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
             {/* Dev Role Switcher */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

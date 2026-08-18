@@ -31,7 +31,10 @@ export type MeetingStatus =
   | "Akan Datang"
   | "Sedang Berlangsung"
   | "Selesai"
-  | "Dibatalkan";
+  | "Dibatalkan"
+  | "MENUNGGU PERSETUJUAN"
+  | "DISETUJUI"
+  | "DITOLAK";
 
 export type Meeting = {
   id: string;
@@ -53,6 +56,9 @@ export type Meeting = {
   notulis_name?: string | null;
   status: MeetingStatus | string;
   is_closed: boolean;
+  proposed_by_name?: string | null;
+  proposed_by_id?: string | null;
+  rejection_reason?: string | null;
   created_by?: string | null;
   created_at?: string;
   updated_at?: string;
@@ -151,5 +157,16 @@ export type AttendanceLog = {
   prev_status: string;
   new_status: string;
   reason: string;
+  created_at: string;
+};
+
+export type InAppNotification = {
+  id: string;
+  user_id: string;
+  meeting_id?: string | null;
+  title: string;
+  message: string;
+  type?: "reminder" | "approval" | "invitation" | string | null;
+  is_read: boolean;
   created_at: string;
 };

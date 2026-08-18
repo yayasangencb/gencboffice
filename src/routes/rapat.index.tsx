@@ -35,14 +35,15 @@ export const Route = createFileRoute("/rapat/")({
 });
 
 function DaftarRapatPage() {
-  const { role } = useAuth();
+  const { role, user, allProfiles } = useAuth();
   const isAdmin = role === "ADMIN";
+  const queryClient = useQueryClient();
 
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [categoryFilter, setCategoryFilter] = useState("ALL");
 
-  const { data: meetings, isLoading } = useQuery({
+  const { data: meetings, isLoading, refetch } = useQuery({
     queryKey: ["meetings"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -68,6 +69,67 @@ function DaftarRapatPage() {
       return counts;
     },
   });
+
+  // Admin Proposal Approvals
+  const handleApproveProposal = async (m: Meeting) => {
+    try {
+      // 1. Update status to 'Akan Datang'
+      await supabase
+        .from("meetings")
+        .update({ status: "Akan Datang" })
+        .eq("id", m.id);
+
+      // 2. Generate QR Tokens for all active profiles
+      const activeProfiles = (allProfiles || []).filter((p) => p.is_active);
+      const participantRows = activeProfiles.map((p) => ({
+        meeting_id: m.id,
+        user_id: p.id,
+        qr_token: generateQrToken(m.id, p.id),
+        invitation_status: "WAJIB HADIR",
+      }));
+
+      await supabase.from("meeting_participants").insert(participantRows);
+
+      const attendanceRows = activeProfiles.map((p) => ({
+        meeting_id: m.id,
+        user_id: p.id,
+        status: "Belum Hadir",
+      }));
+      await supabase.from("attendance").insert(attendanceRows);
+
+      // 3. Broadcast notification to all pengurus
+      const notifRows = activeProfiles.map((p) => ({
+        user_id: p.id,
+        meeting_id: m.id,
+        title: "Undangan Rapat Resmi Baru",
+        message: `Rapat "${m.title}" telah disetujui Admin GEN-CB dan dijadwalkan pada ${m.meeting_date}.`,
+        type: "invitation",
+      }));
+      await supabase.from("notifications").insert(notifRows);
+
+      toast.success(`Rapat "${m.title}" berhasil disetujui! Otomatis masuk ke Kalender GEN-CB.`);
+      refetch();
+    } catch (e) {
+      toast.error("Gagal menyetujui pengajuan rapat: " + (e as Error).message);
+    }
+  };
+
+  const handleRejectProposal = async (m: Meeting) => {
+    try {
+      await supabase
+        .from("meetings")
+        .update({ status: "DITOLAK" })
+        .eq("id", m.id);
+      toast.info(`Pengajuan rapat "${m.title}" ditolak.`);
+      refetch();
+    } catch (e) {
+      toast.error("Gagal menolak pengajuan rapat");
+    }
+  };
+
+  const pendingProposals = useMemo(() => {
+    return (meetings || []).filter((m) => m.status === "MENUNGGU PERSETUJUAN");
+  }, [meetings]);
 
   const filtered = useMemo(() => {
     const rows = meetings ?? [];
@@ -116,6 +178,37 @@ function DaftarRapatPage() {
           </Button>
         )}
       </div>
+
+      {/* Admin Proposal Approval Banner */}
+      {isAdmin && pendingProposals.length > 0 && (
+        <Card className="mb-6 border-amber-500/50 bg-amber-500/10">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base font-bold text-amber-800 dark:text-amber-300 flex items-center gap-2">
+              <AlertCircle className="h-5 w-5" /> Pengajuan Rapat Dari Pengurus ({pendingProposals.length} Menunggu Persetujuan)
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {pendingProposals.map((m) => (
+              <div key={m.id} className="p-3 bg-card rounded-lg border flex items-center justify-between gap-4">
+                <div>
+                  <div className="font-bold text-sm">{m.title}</div>
+                  <div className="text-xs text-muted-foreground">
+                    Pengaju: <span className="font-semibold text-foreground">{m.proposed_by_name || "Pengurus"}</span> · Tanggal: {m.meeting_date} {m.start_time} WIB
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="default" className="bg-emerald-600 hover:bg-emerald-700 h-8 text-xs" onClick={() => handleApproveProposal(m)}>
+                    Setujui Rapat
+                  </Button>
+                  <Button size="sm" variant="destructive" className="h-8 text-xs" onClick={() => handleRejectProposal(m)}>
+                    Tolak
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">

@@ -18,9 +18,11 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as SuratIndexRouteImport } from './routes/surat/index'
 import { Route as VerifyIdRouteImport } from './routes/verify.$id'
 
-// Modul Rapat Flat Routes
+// Modul Rapat & Kalender Flat Routes
+import { Route as KalenderRouteImport } from './routes/kalender'
 import { Route as RapatIndexRouteImport } from './routes/rapat.index'
 import { Route as RapatBaruRouteImport } from './routes/rapat.baru'
+import { Route as RapatPengajuanRouteImport } from './routes/rapat.pengajuan'
 import { Route as RapatIdRouteImport } from './routes/rapat.$id'
 import { Route as UndanganIndexRouteImport } from './routes/undangan.index'
 import { Route as UndanganIdRouteImport } from './routes/undangan.$id'
@@ -72,6 +74,11 @@ const VerifyIdRoute = VerifyIdRouteImport.update({
 } as any)
 
 // Modul Rapat Updates
+const KalenderRoute = KalenderRouteImport.update({
+  id: '/kalender',
+  path: '/kalender',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RapatIndexRoute = RapatIndexRouteImport.update({
   id: '/rapat/',
   path: '/rapat/',
@@ -80,6 +87,11 @@ const RapatIndexRoute = RapatIndexRouteImport.update({
 const RapatBaruRoute = RapatBaruRouteImport.update({
   id: '/rapat/baru',
   path: '/rapat/baru',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RapatPengajuanRoute = RapatPengajuanRouteImport.update({
+  id: '/rapat/pengajuan',
+  path: '/rapat/pengajuan',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RapatIdRoute = RapatIdRouteImport.update({
@@ -132,8 +144,10 @@ export interface FileRoutesByFullPath {
   '/pengaturan': typeof PengaturanRoute
   '/verify/$id': typeof VerifyIdRoute
   '/surat/': typeof SuratIndexRoute
+  '/kalender': typeof KalenderRoute
   '/rapat/': typeof RapatIndexRoute
   '/rapat/baru': typeof RapatBaruRoute
+  '/rapat/pengajuan': typeof RapatPengajuanRoute
   '/rapat/$id': typeof RapatIdRoute
   '/undangan/': typeof UndanganIndexRoute
   '/undangan/$id': typeof UndanganIdRoute
@@ -152,8 +166,10 @@ export interface FileRoutesByTo {
   '/pengaturan': typeof PengaturanRoute
   '/verify/$id': typeof VerifyIdRoute
   '/surat': typeof SuratIndexRoute
+  '/kalender': typeof KalenderRoute
   '/rapat': typeof RapatIndexRoute
   '/rapat/baru': typeof RapatBaruRoute
+  '/rapat/pengajuan': typeof RapatPengajuanRoute
   '/rapat/$id': typeof RapatIdRoute
   '/undangan': typeof UndanganIndexRoute
   '/undangan/$id': typeof UndanganIdRoute
@@ -173,8 +189,10 @@ export interface FileRoutesById {
   '/pengaturan': typeof PengaturanRoute
   '/verify/$id': typeof VerifyIdRoute
   '/surat/': typeof SuratIndexRoute
+  '/kalender': typeof KalenderRoute
   '/rapat/': typeof RapatIndexRoute
   '/rapat/baru': typeof RapatBaruRoute
+  '/rapat/pengajuan': typeof RapatPengajuanRoute
   '/rapat/$id': typeof RapatIdRoute
   '/undangan/': typeof UndanganIndexRoute
   '/undangan/$id': typeof UndanganIdRoute
@@ -195,8 +213,10 @@ export interface FileRouteTypes {
     | '/pengaturan'
     | '/verify/$id'
     | '/surat/'
+    | '/kalender'
     | '/rapat/'
     | '/rapat/baru'
+    | '/rapat/pengajuan'
     | '/rapat/$id'
     | '/undangan/'
     | '/undangan/$id'
@@ -215,8 +235,10 @@ export interface FileRouteTypes {
     | '/pengaturan'
     | '/verify/$id'
     | '/surat'
+    | '/kalender'
     | '/rapat'
     | '/rapat/baru'
+    | '/rapat/pengajuan'
     | '/rapat/$id'
     | '/undangan'
     | '/undangan/$id'
@@ -235,8 +257,10 @@ export interface FileRouteTypes {
     | '/pengaturan'
     | '/verify/$id'
     | '/surat/'
+    | '/kalender'
     | '/rapat/'
     | '/rapat/baru'
+    | '/rapat/pengajuan'
     | '/rapat/$id'
     | '/undangan/'
     | '/undangan/$id'
@@ -256,8 +280,10 @@ export interface RootRouteChildren {
   PengaturanRoute: typeof PengaturanRoute
   VerifyIdRoute: typeof VerifyIdRoute
   SuratIndexRoute: typeof SuratIndexRoute
+  KalenderRoute: typeof KalenderRoute
   RapatIndexRoute: typeof RapatIndexRoute
   RapatBaruRoute: typeof RapatBaruRoute
+  RapatPengajuanRoute: typeof RapatPengajuanRoute
   RapatIdRoute: typeof RapatIdRoute
   UndanganIndexRoute: typeof UndanganIndexRoute
   UndanganIdRoute: typeof UndanganIdRoute
@@ -326,6 +352,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof VerifyIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/kalender': {
+      id: '/kalender'
+      path: '/kalender'
+      fullPath: '/kalender'
+      preLoaderRoute: typeof KalenderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/rapat/': {
       id: '/rapat/'
       path: '/rapat'
@@ -338,6 +371,13 @@ declare module '@tanstack/react-router' {
       path: '/rapat/baru'
       fullPath: '/rapat/baru'
       preLoaderRoute: typeof RapatBaruRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rapat/pengajuan': {
+      id: '/rapat/pengajuan'
+      path: '/rapat/pengajuan'
+      fullPath: '/rapat/pengajuan'
+      preLoaderRoute: typeof RapatPengajuanRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/rapat/$id': {
@@ -408,8 +448,10 @@ const rootRouteChildren: RootRouteChildren = {
   PengaturanRoute: PengaturanRoute,
   VerifyIdRoute: VerifyIdRoute,
   SuratIndexRoute: SuratIndexRoute,
+  KalenderRoute: KalenderRoute,
   RapatIndexRoute: RapatIndexRoute,
   RapatBaruRoute: RapatBaruRoute,
+  RapatPengajuanRoute: RapatPengajuanRoute,
   RapatIdRoute: RapatIdRoute,
   UndanganIndexRoute: UndanganIndexRoute,
   UndanganIdRoute: UndanganIdRoute,

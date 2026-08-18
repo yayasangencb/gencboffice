@@ -5,6 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 const STORAGE_KEY = "gencb.session";
 const USER_KEY = "gencb.active_user_id";
 
+// Admin Tunggal GEN-CB: Muhammad Raditya Anwar
+// Seluruh pengurus lainnya: Role PENGURUS
 export const SAMPLE_PROFILES: Profile[] = [
   {
     id: "usr-admin-radit",
@@ -12,9 +14,9 @@ export const SAMPLE_PROFILES: Profile[] = [
     email: "yayasangencb@gmail.com",
     whatsapp: "085772202454",
     role: "ADMIN",
-    position: "Sekretaris Jenderal / Admin",
+    position: "Admin GEN-CB / Sekretaris Jenderal",
     bidang: "Pengurus Harian",
-    divisi: "Administrasi & Kebijakan",
+    divisi: "Administrasi Utama",
     photo_url: "",
     is_active: true,
     joined_date: "2024-01-10",
@@ -25,7 +27,7 @@ export const SAMPLE_PROFILES: Profile[] = [
     email: "edi.mulyadi@gencb.org",
     whatsapp: "081234567890",
     role: "PENGURUS",
-    position: "Ketua Organisasi",
+    position: "Ketua Umum",
     bidang: "Pengurus Harian",
     divisi: "Pimpinan",
     photo_url: "",
@@ -106,7 +108,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profiles, setProfiles] = useState<Profile[]>(SAMPLE_PROFILES);
   const [currentUser, setCurrentUser] = useState<Profile | null>(SAMPLE_PROFILES[0]);
 
-  // Seed sample profiles into Supabase if empty
   const seedProfilesIfNeeded = async () => {
     try {
       const { data, error } = await supabase.from("profiles").select("*");
@@ -116,12 +117,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const match = data.find((p) => p.id === savedUserId) || data[0];
         setCurrentUser(match as Profile);
       } else {
-        // Insert sample profiles
         await supabase.from("profiles").insert(SAMPLE_PROFILES as never);
       }
-    } catch {
-      // Fallback to sample profiles
-    }
+    } catch {}
   };
 
   useEffect(() => {
@@ -177,7 +175,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { ok: true };
     }
 
-    // Default admin fallback
     if (cleanEmail === "yayasangencb@gmail.com") {
       setCurrentUser(SAMPLE_PROFILES[0]);
       try {
@@ -206,7 +203,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAuthenticated,
         ready,
         user: currentUser,
-        role: currentUser?.role || "ADMIN",
+        role: currentUser?.role || "PENGURUS",
         allProfiles: profiles,
         login,
         logout,
