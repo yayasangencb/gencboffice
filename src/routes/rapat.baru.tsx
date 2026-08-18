@@ -334,7 +334,7 @@ function BuatRapatPage() {
         </Card>
 
         {/* Batas Absensi (Attendance Windows) */}
-        <Card border-primary className="border-l-4 border-l-primary">
+        <Card className="border-l-4 border-l-primary">
           <CardHeader>
             <CardTitle className="text-lg font-bold flex items-center gap-2">
               <Clock className="h-5 w-5 text-primary" /> Pengaturan Batas Absensi (Waktu Scan)

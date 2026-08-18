@@ -89,7 +89,7 @@ function UndanganListPage() {
       {isLoading ? (
         <div className="p-16 flex justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
       ) : !myMeetings || myMeetings.length === 0 ? (
-        <Card border-dashed className="p-12 text-center text-muted-foreground">
+        <Card className="border-dashed p-12 text-center text-muted-foreground">
           <CalendarDays className="h-10 w-10 mx-auto mb-2 opacity-40" />
           Anda belum memiliki undangan rapat aktif saat ini.
         </Card>
