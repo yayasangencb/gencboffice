@@ -66,7 +66,18 @@ import {
   FileCheck,
   History,
   UserCheck,
+  Trash2,
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/rapat/$id")({
@@ -404,6 +415,26 @@ function MeetingWorkspacePage() {
   };
 
   // Close Meeting
+  // Delete Meeting Handler
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDeleteMeetingWorkspace = async () => {
+    if (!meeting) return;
+    setDeleting(true);
+    try {
+      await supabase.from("meetings").delete().eq("id", meetingId);
+      toast.success(`Rapat "${meeting.title}" berhasil dihapus.`);
+      queryClient.invalidateQueries({ queryKey: ["meetings"] });
+      queryClient.invalidateQueries({ queryKey: ["all_attendance_stats"] });
+      navigate({ to: "/rapat" });
+    } catch (e) {
+      toast.error("Gagal menghapus rapat: " + (e as Error).message);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const handleToggleCloseMeeting = async () => {
     if (!meeting) return;
     try {
@@ -498,6 +529,13 @@ function MeetingWorkspacePage() {
               >
                 <Lock className="h-4 w-4 mr-1" />
                 {meeting.is_closed ? "Buka Rapat" : "Tutup Rapat"}
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => setDeleteOpen(true)}
+              >
+                <Trash2 className="h-4 w-4 mr-1" /> Hapus Rapat
               </Button>
             </>
           )}
@@ -889,6 +927,32 @@ function MeetingWorkspacePage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="text-destructive flex items-center gap-2">
+                <Trash2 className="h-5 w-5" /> Hapus Rapat Ini Permanen?
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                Apakah Anda yakin ingin menghapus rapat <strong className="text-foreground">"{meeting.title}"</strong>?
+                <br /><br />
+                ⚠️ <strong>Dampak Penghapusan:</strong> Rapat beserta seluruh presensi dan notulensinya akan dihapus permanen dari database. Persentase kehadiran pengurus yang terpengaruh rapat ini akan otomatis dikalkulasi ulang!
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={deleting}>Batal</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDeleteMeetingWorkspace}
+                disabled={deleting}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {deleting ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : "Ya, Hapus Rapat Ini"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
     </div>
   );
 }

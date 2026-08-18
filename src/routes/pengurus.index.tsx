@@ -39,7 +39,18 @@ import {
   Eye,
   EyeOff,
   Sparkles,
+  Trash2,
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/pengurus/")({
@@ -73,6 +84,33 @@ function ManajemenPengurusPage() {
   const [bidang, setBidang] = useState("Bidang Pemuda & Olahraga");
   const [divisi, setDivisi] = useState("Divisi Acara");
   const [saving, setSaving] = useState(false);
+
+  // Delete User State
+  const [deletingUser, setDeletingUser] = useState<{ id: string; name: string } | null>(null);
+  const [isDeletingUser, setIsDeletingUser] = useState(false);
+
+  const handleConfirmDeleteUser = async () => {
+    if (!deletingUser) return;
+    setIsDeletingUser(true);
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .delete()
+        .eq("id", deletingUser.id);
+
+      if (error) throw error;
+
+      toast.success(`Akun pengurus "${deletingUser.name}" berhasil dihapus.`);
+      setDeletingUser(null);
+      queryClient.invalidateQueries({ queryKey: ["all_profiles_manage"] });
+      queryClient.invalidateQueries({ queryKey: ["all_attendance_stats"] });
+      refreshProfiles();
+    } catch (e) {
+      toast.error("Gagal menghapus pengurus: " + (e as Error).message);
+    } finally {
+      setIsDeletingUser(false);
+    }
+  };
 
   // Fetch Profiles
   const { data: profiles, isLoading } = useQuery({
@@ -366,6 +404,17 @@ function ManajemenPengurusPage() {
                         >
                           {p.is_active ? "Nonaktifkan" : "Aktifkan"}
                         </Button>
+                        {p.role !== "ADMIN" && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 w-7 p-0 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                            onClick={() => setDeletingUser({ id: p.id, name: p.full_name })}
+                            title="Hapus Pengurus Permanen"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
                       </td>
                     </tr>
                   );
@@ -513,7 +562,31 @@ function ManajemenPengurusPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      )}
+      {/* Delete User Confirmation Dialog */}
+      <AlertDialog open={!!deletingUser} onOpenChange={() => setDeletingUser(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-destructive flex items-center gap-2">
+              <Trash2 className="h-5 w-5" /> Hapus Akun Pengurus Permanen?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Apakah Anda yakin ingin menghapus akun pengurus <strong className="text-foreground">"{deletingUser?.name}"</strong>?
+              <br /><br />
+              ⚠️ <strong>Dampak Penghapusan:</strong> Akun pengurus dan seluruh riwayat presensinya akan terhapus permanen. Persentase statistik kehadiran organisasi akan otomatis dikalkulasi ulang!
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeletingUser}>Batal</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDeleteUser}
+              disabled={isDeletingUser}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeletingUser ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : "Ya, Hapus Pengurus"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

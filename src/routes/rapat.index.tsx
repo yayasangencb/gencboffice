@@ -25,7 +25,18 @@ import {
   AlertCircle,
   FileText,
   ChevronRight,
+  Trash2,
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/rapat/")({
   head: () => ({ meta: [{ title: "Daftar Rapat — GEN-CB Office" }] }),
@@ -44,6 +55,30 @@ function DaftarRapatPage() {
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [categoryFilter, setCategoryFilter] = useState("ALL");
+  const [deletingMeeting, setDeletingMeeting] = useState<{ id: string; title: string } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleConfirmDeleteMeeting = async () => {
+    if (!deletingMeeting) return;
+    setIsDeleting(true);
+    try {
+      const { error } = await supabase
+        .from("meetings")
+        .delete()
+        .eq("id", deletingMeeting.id);
+
+      if (error) throw error;
+
+      toast.success(`Rapat "${deletingMeeting.title}" berhasil dihapus dari database.`);
+      setDeletingMeeting(null);
+      refetch();
+      queryClient.invalidateQueries({ queryKey: ["all_attendance_stats"] });
+    } catch (e) {
+      toast.error("Gagal menghapus rapat: " + (e as Error).message);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   const { data: meetings, isLoading, refetch } = useQuery({
     queryKey: ["meetings"],
@@ -349,11 +384,24 @@ function DaftarRapatPage() {
                       <Users className="h-3.5 w-3.5" />
                       <span className="font-semibold text-foreground">{count}</span> Peserta Diundang
                     </div>
-                    <Button size="sm" asChild variant="ghost" className="h-8 px-2.5 text-primary">
-                      <Link to="/rapat/$id" params={{ id: m.id }}>
-                        Buka Workspace <ChevronRight className="h-4 w-4 ml-1" />
-                      </Link>
-                    </Button>
+                    <div className="flex items-center gap-1">
+                      {isAdmin && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                          onClick={() => setDeletingMeeting({ id: m.id, title: m.title })}
+                          title="Hapus Rapat Ini"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                      <Button size="sm" asChild variant="ghost" className="h-8 px-2.5 text-primary">
+                        <Link to="/rapat/$id" params={{ id: m.id }}>
+                          Buka Workspace <ChevronRight className="h-4 w-4 ml-1" />
+                        </Link>
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -361,6 +409,32 @@ function DaftarRapatPage() {
           })}
         </div>
       )}
+
+      {/* Delete Meeting Confirmation Dialog */}
+      <AlertDialog open={!!deletingMeeting} onOpenChange={() => setDeletingMeeting(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-destructive flex items-center gap-2">
+              <Trash2 className="h-5 w-5" /> Hapus Rapat Permanen?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Apakah Anda yakin ingin menghapus rapat <strong className="text-foreground">"{deletingMeeting?.title}"</strong>?
+              <br /><br />
+              ⚠️ <strong>Dampak Penghapusan:</strong> Rapat beserta seluruh presensi dan notulensinya akan dihapus permanen dari database. Persentase kehadiran pengurus yang terpengaruh rapat salah ini akan otomatis dikalkulasi ulang!
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Batal</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDeleteMeeting}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : "Ya, Hapus Rapat"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
