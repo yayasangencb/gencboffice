@@ -191,7 +191,7 @@ function DetailUndanganPage() {
                       ? "outline"
                       : attStatus === "ALFA"
                       ? "destructive"
-                      : "ghost"
+                      : "outline"
                   }
                   className="text-sm font-bold px-3 py-1"
                 >
