@@ -24,8 +24,9 @@ import {
   UserCheck,
   Sparkles,
   RefreshCw,
-  Volume2,
   XCircle,
+  Clock,
+  History,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -38,34 +39,42 @@ export const Route = createFileRoute("/scan-qr")({
   ),
 });
 
-type ScanResult = {
-  participantId: string;
-  meetingId: string;
-  userId: string;
-  user: Profile;
-  meeting: Meeting;
-  qrToken: string;
-  existingStatus?: string;
-  existingCheckIn?: string;
-  calculatedStatus: AttendanceStatus;
-  scanTime: Date;
+type RecentScanLog = {
+  id: string;
+  name: string;
+  position: string;
+  status: AttendanceStatus;
+  meetingTitle: string;
+  scanTimeStr: string;
+  isDuplicate: boolean;
 };
 
 // Play audio beep sound on successful scan
-function playScanSound() {
+function playScanSound(isDuplicate = false) {
   try {
     const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
     if (!AudioCtx) return;
     const ctx = new AudioCtx();
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
-    osc.type = "sine";
-    osc.frequency.setValueAtTime(1046.5, ctx.currentTime); // C6 tone
-    gain.gain.setValueAtTime(0.15, ctx.currentTime);
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start();
-    osc.stop(ctx.currentTime + 0.15);
+
+    if (isDuplicate) {
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(440, ctx.currentTime); // A4 warning tone
+      gain.gain.setValueAtTime(0.2, ctx.currentTime);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.25);
+    } else {
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(1046.5, ctx.currentTime); // C6 tone
+      gain.gain.setValueAtTime(0.15, ctx.currentTime);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.15);
+    }
   } catch {}
 }
 
@@ -76,9 +85,9 @@ function AdminScanQrPage() {
   const [selectedMeetingId, setSelectedMeetingId] = useState<string>("ALL");
   const [manualToken, setManualToken] = useState("");
   const [scanning, setScanning] = useState(false);
-  const [scanResult, setScanResult] = useState<ScanResult | null>(null);
-  const [confirming, setConfirming] = useState(false);
   const [lastScannedToken, setLastScannedToken] = useState<string>("");
+  const [recentLogs, setRecentLogs] = useState<RecentScanLog[]>([]);
+  const [processing, setProcessing] = useState(false);
 
   // Camera & Canvas Refs
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -98,12 +107,13 @@ function AdminScanQrPage() {
     },
   });
 
-  // Process Token Lookup (from camera scan or manual text input)
-  const processTokenLookup = useCallback(
+  // Process Instant Auto Check-In by Token
+  const processTokenInstant = useCallback(
     async (token: string) => {
       const cleanToken = token.trim();
-      if (!cleanToken) return;
+      if (!cleanToken || processing) return;
 
+      setProcessing(true);
       try {
         // 1. Fetch Participant Record by Token
         const { data: part, error: pErr } = await supabase
@@ -113,7 +123,10 @@ function AdminScanQrPage() {
           .maybeSingle();
 
         if (pErr || !part) {
-          toast.error("QR Code tidak terdaftar di sistem");
+          playScanSound(true);
+          toast.error("❌ QR Code tidak terdaftar di sistem", { duration: 2500 });
+          setLastScannedToken(cleanToken);
+          setProcessing(false);
           return;
         }
 
@@ -125,12 +138,15 @@ function AdminScanQrPage() {
           .single();
 
         if (!mData) {
-          toast.error("Data rapat tidak ditemukan");
+          toast.error("❌ Data rapat tidak ditemukan", { duration: 2500 });
+          setProcessing(false);
           return;
         }
 
         if (mData.is_closed) {
-          toast.error("Rapat ini sudah ditutup. Registrasi dikunci.");
+          playScanSound(true);
+          toast.error("❌ Rapat ini sudah ditutup. Presensi dikunci.", { duration: 2500 });
+          setProcessing(false);
           return;
         }
 
@@ -142,7 +158,8 @@ function AdminScanQrPage() {
           .single();
 
         if (!uData) {
-          toast.error("Data pengurus tidak ditemukan");
+          toast.error("❌ Data pengurus tidak ditemukan", { duration: 2500 });
+          setProcessing(false);
           return;
         }
 
@@ -155,36 +172,103 @@ function AdminScanQrPage() {
           .maybeSingle();
 
         const now = new Date();
+        const scanTimeStr = now.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) + " WIB";
+
+        // If ALREADY CHECKED IN (HADIR or TERLAMBAT)
+        if (att && (att.status === "HADIR" || att.status === "TERLAMBAT")) {
+          playScanSound(true);
+          if (navigator.vibrate) navigator.vibrate([150, 50, 150]);
+
+          const checkInFormatted = att.check_in_time
+            ? new Date(att.check_in_time).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) + " WIB"
+            : scanTimeStr;
+
+          // SweetAlert style warning toast
+          toast.warning(`⚠️ ${uData.full_name} Sudah Pernah Absensi!`, {
+            description: `Status sebelumnya: ${att.status} (${checkInFormatted}) | Rapat: ${mData.title}`,
+            duration: 3500,
+          });
+
+          setRecentLogs((prev) => [
+            {
+              id: Math.random().toString(),
+              name: uData.full_name,
+              position: uData.position || "Pengurus",
+              status: att.status as AttendanceStatus,
+              meetingTitle: mData.title,
+              scanTimeStr: checkInFormatted,
+              isDuplicate: true,
+            },
+            ...prev.slice(0, 4),
+          ]);
+
+          setLastScannedToken(cleanToken);
+          setProcessing(false);
+          return;
+        }
+
+        // If NEW INSTANT CHECK-IN
         const calcStatus = calculateAttendanceStatus(now, mData as Meeting);
 
-        const result: ScanResult = {
-          participantId: part.id,
-          meetingId: part.meeting_id,
-          userId: part.user_id,
-          user: uData as Profile,
-          meeting: mData as Meeting,
-          qrToken: part.qr_token,
-          existingStatus: att?.status,
-          existingCheckIn: att?.check_in_time ?? undefined,
-          calculatedStatus: calcStatus,
-          scanTime: now,
-        };
+        const { error: saveErr } = await supabase
+          .from("attendance")
+          .upsert(
+            {
+              meeting_id: part.meeting_id,
+              user_id: part.user_id,
+              status: calcStatus,
+              check_in_time: now.toISOString(),
+              scanned_by: user?.full_name || "Admin",
+              is_manual: false,
+            },
+            { onConflict: "meeting_id,user_id" }
+          );
 
-        playScanSound();
-        if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+        if (saveErr) throw saveErr;
 
-        setScanResult(result);
+        playScanSound(false);
+        if (navigator.vibrate) navigator.vibrate([100]);
+
+        // SweetAlert style success toast
+        toast.success(`🟢 Presensi Berhasil: ${uData.full_name}`, {
+          description: `Status: ${calcStatus} (${scanTimeStr}) | Rapat: ${mData.title}`,
+          duration: 3500,
+        });
+
+        setRecentLogs((prev) => [
+          {
+            id: Math.random().toString(),
+            name: uData.full_name,
+            position: uData.position || "Pengurus",
+            status: calcStatus,
+            meetingTitle: mData.title,
+            scanTimeStr,
+            isDuplicate: false,
+          },
+          ...prev.slice(0, 4),
+        ]);
+
         setLastScannedToken(cleanToken);
+        setManualToken("");
+        queryClient.invalidateQueries({ queryKey: ["attendance", part.meeting_id] });
       } catch (err) {
-        toast.error("Verifikasi QR gagal: " + (err as Error).message);
+        toast.error("Gagal mencatat presensi: " + (err as Error).message);
+      } finally {
+        // Auto reset lock after 1.5 seconds for continuous scanning
+        setTimeout(() => {
+          setProcessing(false);
+        }, 1500);
       }
     },
-    []
+    [user?.full_name, processing, queryClient]
   );
 
   // Real-time Canvas Frame Scan Loop
   const tickScanLoop = useCallback(() => {
-    if (!scanning || scanResult) return;
+    if (!scanning || processing) {
+      animFrameIdRef.current = requestAnimationFrame(tickScanLoop);
+      return;
+    }
 
     const video = videoRef.current;
     if (video && video.readyState === video.HAVE_ENOUGH_DATA) {
@@ -205,17 +289,16 @@ function AdminScanQrPage() {
         });
 
         if (code && code.data && code.data !== lastScannedToken) {
-          processTokenLookup(code.data);
-          return; // pause scan tick until processed
+          processTokenInstant(code.data);
         }
       }
     }
 
     animFrameIdRef.current = requestAnimationFrame(tickScanLoop);
-  }, [scanning, scanResult, lastScannedToken, processTokenLookup]);
+  }, [scanning, processing, lastScannedToken, processTokenInstant]);
 
   useEffect(() => {
-    if (scanning && !scanResult) {
+    if (scanning) {
       animFrameIdRef.current = requestAnimationFrame(tickScanLoop);
     }
     return () => {
@@ -223,13 +306,12 @@ function AdminScanQrPage() {
         cancelAnimationFrame(animFrameIdRef.current);
       }
     };
-  }, [scanning, scanResult, tickScanLoop]);
+  }, [scanning, tickScanLoop]);
 
   // Start Camera
   const startCamera = async () => {
     try {
       setScanning(true);
-      setScanResult(null);
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } },
       });
@@ -263,48 +345,6 @@ function AdminScanQrPage() {
     };
   }, []);
 
-  // Reset for next scan
-  const handleResetForNextScan = () => {
-    setScanResult(null);
-    setManualToken("");
-    setLastScannedToken("");
-    if (scanning) {
-      animFrameIdRef.current = requestAnimationFrame(tickScanLoop);
-    }
-  };
-
-  // Confirm Attendance
-  const handleConfirmAttendance = async () => {
-    if (!scanResult) return;
-    setConfirming(true);
-
-    try {
-      const { error } = await supabase
-        .from("attendance")
-        .upsert(
-          {
-            meeting_id: scanResult.meetingId,
-            user_id: scanResult.userId,
-            status: scanResult.calculatedStatus,
-            check_in_time: scanResult.scanTime.toISOString(),
-            scanned_by: user?.full_name || "Admin",
-            is_manual: false,
-          },
-          { onConflict: "meeting_id,user_id" }
-        );
-
-      if (error) throw error;
-
-      toast.success(`✅ Kehadiran ${scanResult.user.full_name} (${scanResult.calculatedStatus}) Berhasil Dicatat!`);
-      queryClient.invalidateQueries({ queryKey: ["attendance", scanResult.meetingId] });
-      handleResetForNextScan();
-    } catch (e) {
-      toast.error("Gagal mengonfirmasi absensi: " + (e as Error).message);
-    } finally {
-      setConfirming(false);
-    }
-  };
-
   return (
     <div className="mx-auto max-w-4xl px-4 py-8">
       <div className="flex items-center gap-3 mb-6">
@@ -315,26 +355,30 @@ function AdminScanQrPage() {
         </Button>
         <div>
           <h1 className="text-3xl font-black tracking-tight flex items-center gap-2">
-            <QrCode className="h-7 w-7 text-primary" /> Admin Camera QR Scanner
+            <QrCode className="h-7 w-7 text-primary" /> Instant Auto Camera QR Scanner
           </h1>
           <p className="text-sm text-muted-foreground">
-            Arahkan kamera HP ke QR Code peserta untuk mencatat presensi secara otomatis dan presisi.
+            Arahkan kamera ke QR Code peserta. Presensi otomatis tercatat instan tanpa perlu klik konfirmasi.
           </p>
         </div>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
-        {/* Scanner Box */}
+        {/* Camera Box */}
         <Card className="overflow-hidden shadow-md">
           <CardHeader className="pb-3">
             <CardTitle className="text-base font-bold flex items-center justify-between">
               <span className="flex items-center gap-2">
-                <Camera className="h-4 w-4 text-primary" /> Camera Scanner HP & Desktop
+                <Camera className="h-4 w-4 text-primary" /> Camera Auto-Scanner
               </span>
-              {scanning && <Badge variant="default" className="animate-pulse bg-emerald-600 text-[10px]">Kamera Aktif</Badge>}
+              {scanning && (
+                <Badge variant="default" className="animate-pulse bg-emerald-600 text-[10px]">
+                  Kamera Aktif & Memindai
+                </Badge>
+              )}
             </CardTitle>
             <CardDescription className="text-xs">
-              Mendeteksi QR Code secara otomatis 30 FPS dan mengirimkan sinyal bunyi bip.
+              Mendeteksi QR Code 30 FPS dan langsung menyimpan status HADIR ke database.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -374,92 +418,45 @@ function AdminScanQrPage() {
           </CardContent>
         </Card>
 
-        {/* Scan Result & Manual Input */}
+        {/* Live Logs & Manual Input */}
         <div className="space-y-4">
-          {/* Result Card */}
-          {scanResult ? (
-            <Card className="border-2 border-primary shadow-lg bg-card animate-in fade-in">
-              <CardHeader className="bg-primary/5 pb-3">
-                <div className="flex items-center justify-between">
-                  <Badge variant="outline" className="text-xs font-bold text-primary">
-                    Hasil Scan QR
-                  </Badge>
-                  <Badge
-                    variant={
-                      scanResult.calculatedStatus === "HADIR"
-                        ? "default"
-                        : scanResult.calculatedStatus === "TERLAMBAT"
-                        ? "secondary"
-                        : "destructive"
-                    }
-                    className="text-xs font-bold"
+          {/* Recent Scans Live Feed */}
+          <Card className="shadow-md">
+            <CardHeader className="pb-2 flex flex-row items-center justify-between">
+              <CardTitle className="text-sm font-bold flex items-center gap-1.5">
+                <History className="h-4 w-4 text-primary" /> Riwayat Presensi Instan (Terakhir)
+              </CardTitle>
+              {processing && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
+            </CardHeader>
+            <CardContent className="space-y-2 text-xs">
+              {recentLogs.length === 0 ? (
+                <div className="p-8 text-center text-muted-foreground border border-dashed rounded-lg">
+                  <QrCode className="h-8 w-8 mx-auto mb-1 opacity-40" />
+                  Belum ada QR Code yang di-scan pada sesi ini.
+                </div>
+              ) : (
+                recentLogs.map((log) => (
+                  <div
+                    key={log.id}
+                    className={`p-3 rounded-lg border flex items-center justify-between gap-3 animate-in fade-in ${
+                      log.isDuplicate ? "bg-amber-500/10 border-amber-500/30" : "bg-emerald-500/10 border-emerald-500/30"
+                    }`}
                   >
-                    {scanResult.calculatedStatus}
-                  </Badge>
-                </div>
-                <CardTitle className="text-lg font-black mt-1">
-                  {scanResult.user.full_name}
-                </CardTitle>
-                <CardDescription className="text-xs font-medium text-foreground/80">
-                  {scanResult.user.position} · {scanResult.user.bidang || scanResult.user.divisi || "Pengurus"}
-                </CardDescription>
-              </CardHeader>
-
-              <CardContent className="p-4 space-y-4 text-xs">
-                <div className="p-3 rounded-lg bg-muted/60 space-y-1">
-                  <div className="font-bold text-foreground truncate">{scanResult.meeting.title}</div>
-                  <div className="text-muted-foreground flex justify-between">
-                    <span>Waktu Scan:</span>
-                    <span className="font-mono font-bold text-foreground">
-                      {scanResult.scanTime.toLocaleTimeString("id-ID")} WIB
-                    </span>
-                  </div>
-                </div>
-
-                {scanResult.existingStatus && (
-                  <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-800 dark:text-amber-300 flex items-start gap-2">
-                    <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
                     <div>
-                      <div className="font-bold">⚠️ Peserta Sudah Melakukan Absensi!</div>
-                      <div>
-                        Status sebelumnya: <span className="font-bold">{scanResult.existingStatus}</span>
-                      </div>
+                      <div className="font-bold text-sm text-foreground">{log.name}</div>
+                      <div className="text-[11px] text-muted-foreground truncate">{log.position} · {log.meetingTitle}</div>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <Badge variant={log.isDuplicate ? "secondary" : "default"} className="text-[10px] font-bold">
+                        {log.isDuplicate ? "SUDAH ABSEN" : log.status}
+                      </Badge>
+                      <div className="text-[10px] font-mono text-muted-foreground mt-0.5">{log.scanTimeStr}</div>
                     </div>
                   </div>
-                )}
-
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    className="flex-1"
-                    onClick={handleResetForNextScan}
-                  >
-                    Batal / Scan Lagi
-                  </Button>
-                  <Button
-                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
-                    onClick={handleConfirmAttendance}
-                    disabled={confirming}
-                  >
-                    {confirming ? (
-                      <Loader2 className="h-4 w-4 animate-spin mr-1" />
-                    ) : (
-                      <CheckCircle2 className="h-4 w-4 mr-1" />
-                    )}
-                    Konfirmasi Hadir
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ) : (
-            <Card className="border-dashed p-6 text-center text-muted-foreground space-y-2">
-              <QrCode className="h-10 w-10 mx-auto text-primary opacity-50" />
-              <div className="font-bold text-sm text-foreground">Menunggu Scan QR...</div>
-              <p className="text-xs">
-                Arahkan QR Code peserta ke area kamera atau masukkan kode token secara manual di bawah.
-              </p>
-            </Card>
-          )}
+                ))
+              )}
+            </CardContent>
+          </Card>
 
           {/* Manual Input Fallback */}
           <Card>
@@ -480,12 +477,12 @@ function AdminScanQrPage() {
               </div>
 
               <Button
-                onClick={() => processTokenLookup(manualToken)}
-                disabled={!manualToken.trim()}
+                onClick={() => processTokenInstant(manualToken)}
+                disabled={!manualToken.trim() || processing}
                 className="w-full"
                 size="sm"
               >
-                Cari & Verifikasi Token
+                {processing ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : "Verifikasi & Presensi Instan"}
               </Button>
             </CardContent>
           </Card>
