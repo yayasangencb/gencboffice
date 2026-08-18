@@ -828,6 +828,7 @@ function MeetingWorkspacePage() {
               </CardContent>
             </Card>
           </TabsContent>
+        )}
         </Tabs>
 
         {/* Override Modal */}
