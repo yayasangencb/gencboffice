@@ -1,11 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { RequireAuth } from "@/components/app-shell";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { calculateAttendanceStatus } from "@/lib/rapat";
 import type { Meeting, Profile, AttendanceStatus } from "@/lib/rapat.types";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import jsQR from "jsqr";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +23,9 @@ import {
   Search,
   UserCheck,
   Sparkles,
+  RefreshCw,
+  Volume2,
+  XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -47,6 +51,24 @@ type ScanResult = {
   scanTime: Date;
 };
 
+// Play audio beep sound on successful scan
+function playScanSound() {
+  try {
+    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(1046.5, ctx.currentTime); // C6 tone
+    gain.gain.setValueAtTime(0.15, ctx.currentTime);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.15);
+  } catch {}
+}
+
 function AdminScanQrPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -56,10 +78,13 @@ function AdminScanQrPage() {
   const [scanning, setScanning] = useState(false);
   const [scanResult, setScanResult] = useState<ScanResult | null>(null);
   const [confirming, setConfirming] = useState(false);
+  const [lastScannedToken, setLastScannedToken] = useState<string>("");
 
-  // Video element ref for camera preview
+  // Camera & Canvas Refs
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const animFrameIdRef = useRef<number | null>(null);
 
   // Fetch Active Meetings
   const { data: activeMeetings } = useQuery({
@@ -73,12 +98,140 @@ function AdminScanQrPage() {
     },
   });
 
+  // Process Token Lookup (from camera scan or manual text input)
+  const processTokenLookup = useCallback(
+    async (token: string) => {
+      const cleanToken = token.trim();
+      if (!cleanToken) return;
+
+      try {
+        // 1. Fetch Participant Record by Token
+        const { data: part, error: pErr } = await supabase
+          .from("meeting_participants")
+          .select("*")
+          .eq("qr_token", cleanToken)
+          .maybeSingle();
+
+        if (pErr || !part) {
+          toast.error("QR Code tidak terdaftar di sistem");
+          return;
+        }
+
+        // 2. Fetch Meeting details
+        const { data: mData } = await supabase
+          .from("meetings")
+          .select("*")
+          .eq("id", part.meeting_id)
+          .single();
+
+        if (!mData) {
+          toast.error("Data rapat tidak ditemukan");
+          return;
+        }
+
+        if (mData.is_closed) {
+          toast.error("Rapat ini sudah ditutup. Registrasi dikunci.");
+          return;
+        }
+
+        // 3. Fetch User profile
+        const { data: uData } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", part.user_id)
+          .single();
+
+        if (!uData) {
+          toast.error("Data pengurus tidak ditemukan");
+          return;
+        }
+
+        // 4. Check existing attendance record
+        const { data: att } = await supabase
+          .from("attendance")
+          .select("*")
+          .eq("meeting_id", part.meeting_id)
+          .eq("user_id", part.user_id)
+          .maybeSingle();
+
+        const now = new Date();
+        const calcStatus = calculateAttendanceStatus(now, mData as Meeting);
+
+        const result: ScanResult = {
+          participantId: part.id,
+          meetingId: part.meeting_id,
+          userId: part.user_id,
+          user: uData as Profile,
+          meeting: mData as Meeting,
+          qrToken: part.qr_token,
+          existingStatus: att?.status,
+          existingCheckIn: att?.check_in_time ?? undefined,
+          calculatedStatus: calcStatus,
+          scanTime: now,
+        };
+
+        playScanSound();
+        if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+
+        setScanResult(result);
+        setLastScannedToken(cleanToken);
+      } catch (err) {
+        toast.error("Verifikasi QR gagal: " + (err as Error).message);
+      }
+    },
+    []
+  );
+
+  // Real-time Canvas Frame Scan Loop
+  const tickScanLoop = useCallback(() => {
+    if (!scanning || scanResult) return;
+
+    const video = videoRef.current;
+    if (video && video.readyState === video.HAVE_ENOUGH_DATA) {
+      if (!canvasRef.current) {
+        canvasRef.current = document.createElement("canvas");
+      }
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext("2d", { willReadFrequently: true });
+
+      if (ctx) {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const code = jsQR(imageData.data, imageData.width, imageData.height, {
+          inversionAttempts: "dontInvert",
+        });
+
+        if (code && code.data && code.data !== lastScannedToken) {
+          processTokenLookup(code.data);
+          return; // pause scan tick until processed
+        }
+      }
+    }
+
+    animFrameIdRef.current = requestAnimationFrame(tickScanLoop);
+  }, [scanning, scanResult, lastScannedToken, processTokenLookup]);
+
+  useEffect(() => {
+    if (scanning && !scanResult) {
+      animFrameIdRef.current = requestAnimationFrame(tickScanLoop);
+    }
+    return () => {
+      if (animFrameIdRef.current) {
+        cancelAnimationFrame(animFrameIdRef.current);
+      }
+    };
+  }, [scanning, scanResult, tickScanLoop]);
+
   // Start Camera
   const startCamera = async () => {
     try {
       setScanning(true);
+      setScanResult(null);
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment" },
+        video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } },
       });
       streamRef.current = stream;
       if (videoRef.current) {
@@ -86,13 +239,17 @@ function AdminScanQrPage() {
         videoRef.current.play();
       }
     } catch (e) {
-      toast.error("Tidak dapat mengakses kamera: " + (e as Error).message);
+      toast.error("Kamera HP/Desktop tidak dapat diakses: " + (e as Error).message);
       setScanning(false);
     }
   };
 
   // Stop Camera
   const stopCamera = () => {
+    if (animFrameIdRef.current) {
+      cancelAnimationFrame(animFrameIdRef.current);
+      animFrameIdRef.current = null;
+    }
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
@@ -106,71 +263,13 @@ function AdminScanQrPage() {
     };
   }, []);
 
-  // Process Token Lookup (from camera scan or manual text input)
-  const processTokenLookup = async (token: string) => {
-    if (!token.trim()) return;
-
-    try {
-      // 1. Fetch Participant Record by Token
-      const { data: part, error: pErr } = await supabase
-        .from("meeting_participants")
-        .select("*")
-        .eq("qr_token", token.trim())
-        .maybeSingle();
-
-      if (pErr || !part) {
-        return toast.error("QR Code tidak valid atau tidak terdaftar di sistem");
-      }
-
-      // 2. Fetch Meeting details
-      const { data: mData } = await supabase
-        .from("meetings")
-        .select("*")
-        .eq("id", part.meeting_id)
-        .single();
-
-      if (!mData) return toast.error("Data rapat tidak ditemukan");
-
-      if (mData.is_closed) {
-        return toast.error("Rapat ini sudah ditutup. Registrasi kehadiran dikunci.");
-      }
-
-      // 3. Fetch User profile
-      const { data: uData } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", part.user_id)
-        .single();
-
-      if (!uData) return toast.error("Data pengurus tidak ditemukan");
-
-      // 4. Check existing attendance record
-      const { data: att } = await supabase
-        .from("attendance")
-        .select("*")
-        .eq("meeting_id", part.meeting_id)
-        .eq("user_id", part.user_id)
-        .maybeSingle();
-
-      const now = new Date();
-      const calcStatus = calculateAttendanceStatus(now, mData as Meeting);
-
-      const result: ScanResult = {
-        participantId: part.id,
-        meetingId: part.meeting_id,
-        userId: part.user_id,
-        user: uData as Profile,
-        meeting: mData as Meeting,
-        qrToken: part.qr_token,
-        existingStatus: att?.status,
-        existingCheckIn: att?.check_in_time ?? undefined,
-        calculatedStatus: calcStatus,
-        scanTime: now,
-      };
-
-      setScanResult(result);
-    } catch (err) {
-      toast.error("Gagal melakukan verifikasi QR: " + (err as Error).message);
+  // Reset for next scan
+  const handleResetForNextScan = () => {
+    setScanResult(null);
+    setManualToken("");
+    setLastScannedToken("");
+    if (scanning) {
+      animFrameIdRef.current = requestAnimationFrame(tickScanLoop);
     }
   };
 
@@ -182,21 +281,23 @@ function AdminScanQrPage() {
     try {
       const { error } = await supabase
         .from("attendance")
-        .upsert({
-          meeting_id: scanResult.meetingId,
-          user_id: scanResult.userId,
-          status: scanResult.calculatedStatus,
-          check_in_time: scanResult.scanTime.toISOString(),
-          scanned_by: user?.full_name || "Admin",
-          is_manual: false,
-        }, { onConflict: "meeting_id,user_id" });
+        .upsert(
+          {
+            meeting_id: scanResult.meetingId,
+            user_id: scanResult.userId,
+            status: scanResult.calculatedStatus,
+            check_in_time: scanResult.scanTime.toISOString(),
+            scanned_by: user?.full_name || "Admin",
+            is_manual: false,
+          },
+          { onConflict: "meeting_id,user_id" }
+        );
 
       if (error) throw error;
 
       toast.success(`✅ Kehadiran ${scanResult.user.full_name} (${scanResult.calculatedStatus}) Berhasil Dicatat!`);
-      setScanResult(null);
-      setManualToken("");
       queryClient.invalidateQueries({ queryKey: ["attendance", scanResult.meetingId] });
+      handleResetForNextScan();
     } catch (e) {
       toast.error("Gagal mengonfirmasi absensi: " + (e as Error).message);
     } finally {
@@ -217,137 +318,178 @@ function AdminScanQrPage() {
             <QrCode className="h-7 w-7 text-primary" /> Admin Camera QR Scanner
           </h1>
           <p className="text-sm text-muted-foreground">
-            Arahkan kamera HP ke QR Code peserta untuk mencatat presensi kehadiran secara cepat.
+            Arahkan kamera HP ke QR Code peserta untuk mencatat presensi secara otomatis dan presisi.
           </p>
         </div>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
         {/* Scanner Box */}
-        <Card className="overflow-hidden">
+        <Card className="overflow-hidden shadow-md">
           <CardHeader className="pb-3">
             <CardTitle className="text-base font-bold flex items-center justify-between">
-              <span className="flex items-center gap-2"><Camera className="h-4 w-4 text-primary" /> Camera Scanner</span>
+              <span className="flex items-center gap-2">
+                <Camera className="h-4 w-4 text-primary" /> Camera Scanner HP & Desktop
+              </span>
               {scanning && <Badge variant="default" className="animate-pulse bg-emerald-600 text-[10px]">Kamera Aktif</Badge>}
             </CardTitle>
             <CardDescription className="text-xs">
-              Optimasi penuh untuk layar HP & Desktop dengan validasi instan server.
+              Mendeteksi QR Code secara otomatis 30 FPS dan mengirimkan sinyal bunyi bip.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="relative aspect-square bg-black rounded-xl overflow-hidden flex items-center justify-center border-2 border-primary/30">
-              <video ref={videoRef} className="w-full h-full object-cover" playsInline />
+            <div className="relative aspect-square bg-black rounded-xl overflow-hidden flex items-center justify-center border-2 border-primary/30 shadow-inner">
+              <video ref={videoRef} className="w-full h-full object-cover" playsInline autoPlay muted />
+
               {!scanning && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center text-white bg-black/80 space-y-3">
-                  <QrCode className="h-12 w-12 text-primary opacity-60" />
-                  <p className="text-xs text-muted-foreground">Klik tombol di bawah untuk mengaktifkan Kamera HP.</p>
-                  <Button onClick={startCamera} className="gap-2">
+                  <QrCode className="h-14 w-14 text-primary opacity-80 animate-bounce" />
+                  <p className="text-xs text-muted-foreground max-w-xs">
+                    Klik tombol di bawah ini untuk menyalakan Kamera HP/Desktop Admin.
+                  </p>
+                  <Button onClick={startCamera} className="gap-2 shadow-lg bg-primary">
                     <Camera className="h-4 w-4" /> Buka Kamera HP
                   </Button>
                 </div>
               )}
+
               {scanning && (
-                <div className="absolute inset-0 border-2 border-primary/60 m-8 rounded-lg pointer-events-none animate-pulse flex items-center justify-center">
-                  <div className="w-full h-0.5 bg-primary/80 animate-bounce" />
+                <div className="absolute inset-0 border-2 border-emerald-400 m-8 rounded-xl pointer-events-none animate-pulse flex items-center justify-center">
+                  <div className="w-full h-0.5 bg-emerald-400 shadow-[0_0_15px_#10b981] animate-ping" />
                 </div>
               )}
             </div>
 
-            {scanning && (
-              <Button variant="outline" size="sm" onClick={stopCamera} className="w-full text-xs">
-                Matikan Kamera
-              </Button>
-            )}
-
-            {/* Manual Token Fallback */}
-            <div className="border-t pt-4 space-y-2">
-              <Label className="text-xs font-bold">Input Token Manual (Cari / Tempel Token QR):</Label>
-              <div className="flex gap-2">
-                <Input
-                  value={manualToken}
-                  onChange={(e) => setManualToken(e.target.value)}
-                  placeholder="Contoh: GEN-CB-QR-..."
-                  className="text-xs font-mono"
-                  onKeyDown={(e) => e.key === "Enter" && processTokenLookup(manualToken)}
-                />
-                <Button size="sm" onClick={() => processTokenLookup(manualToken)}>
-                  <Search className="h-4 w-4" />
+            <div className="flex items-center justify-between">
+              {scanning ? (
+                <Button variant="outline" size="sm" onClick={stopCamera} className="w-full text-destructive border-destructive/40">
+                  <XCircle className="h-4 w-4 mr-1.5" /> Matikan Kamera
                 </Button>
-              </div>
+              ) : (
+                <Button variant="secondary" size="sm" onClick={startCamera} className="w-full">
+                  <RefreshCw className="h-4 w-4 mr-1.5" /> Hidupkan Ulang Kamera
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>
 
-        {/* Scan Verification Result Panel */}
-        <Card className="flex flex-col justify-between">
-          <CardHeader>
-            <CardTitle className="text-base font-bold flex items-center gap-2">
-              <UserCheck className="h-5 w-5 text-primary" /> Hasil Verifikasi QR Code
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {!scanResult ? (
-              <div className="h-64 border border-dashed rounded-xl flex flex-col items-center justify-center p-6 text-center text-muted-foreground">
-                <QrCode className="h-10 w-10 mb-2 opacity-30" />
-                <p className="text-xs">Scan QR Code peserta atau masukkan token manual untuk menampilkan info peserta di sini.</p>
-              </div>
-            ) : scanResult.existingStatus && (scanResult.existingStatus === "HADIR" || scanResult.existingStatus === "TERLAMBAT") ? (
-              /* Already Scanned Warning */
-              <div className="p-4 rounded-xl border-2 border-amber-500/50 bg-amber-500/10 space-y-3">
-                <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400 font-bold text-sm">
-                  <AlertTriangle className="h-5 w-5" /> ⚠️ Peserta Sudah Melakukan Absensi
+        {/* Scan Result & Manual Input */}
+        <div className="space-y-4">
+          {/* Result Card */}
+          {scanResult ? (
+            <Card className="border-2 border-primary shadow-lg bg-card animate-in fade-in">
+              <CardHeader className="bg-primary/5 pb-3">
+                <div className="flex items-center justify-between">
+                  <Badge variant="outline" className="text-xs font-bold text-primary">
+                    Hasil Scan QR
+                  </Badge>
+                  <Badge
+                    variant={
+                      scanResult.calculatedStatus === "HADIR"
+                        ? "default"
+                        : scanResult.calculatedStatus === "TERLAMBAT"
+                        ? "secondary"
+                        : "destructive"
+                    }
+                    className="text-xs font-bold"
+                  >
+                    {scanResult.calculatedStatus}
+                  </Badge>
                 </div>
+                <CardTitle className="text-lg font-black mt-1">
+                  {scanResult.user.full_name}
+                </CardTitle>
+                <CardDescription className="text-xs font-medium text-foreground/80">
+                  {scanResult.user.position} · {scanResult.user.bidang || scanResult.user.divisi || "Pengurus"}
+                </CardDescription>
+              </CardHeader>
 
-                <div className="space-y-1.5 text-xs text-foreground">
-                  <div>Nama: <span className="font-bold">{scanResult.user.full_name}</span></div>
-                  <div>Jabatan: <span className="font-semibold">{scanResult.user.position}</span></div>
-                  <div>Rapat: <span className="font-semibold">{scanResult.meeting.title}</span></div>
-                  <div>Waktu Masuk: <span className="font-mono">{scanResult.existingCheckIn ? new Date(scanResult.existingCheckIn).toLocaleTimeString("id-ID") : "-"} WIB</span></div>
-                  <div>Status Terdaftar: <Badge variant="secondary">{scanResult.existingStatus}</Badge></div>
-                </div>
-
-                <Button variant="outline" size="sm" onClick={() => setScanResult(null)} className="w-full text-xs mt-2">
-                  Scan Peserta Lain
-                </Button>
-              </div>
-            ) : (
-              /* Valid New Scan Confirmation */
-              <div className="p-4 rounded-xl border-2 border-emerald-500/50 bg-emerald-500/10 space-y-4">
-                <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400 font-bold text-sm">
-                  <CheckCircle2 className="h-5 w-5" /> ✅ QR Valid — Siap Konfirmasi
-                </div>
-
-                <div className="space-y-2 text-xs border-y border-emerald-500/20 py-3">
-                  <div><span className="text-muted-foreground">Nama Peserta:</span> <div className="font-black text-sm text-foreground">{scanResult.user.full_name}</div></div>
-                  <div><span className="text-muted-foreground">Jabatan / Divisi:</span> <div className="font-semibold text-foreground">{scanResult.user.position} · {scanResult.user.divisi || scanResult.user.bidang || "Pengurus"}</div></div>
-                  <div><span className="text-muted-foreground">Rapat:</span> <div className="font-semibold text-foreground">{scanResult.meeting.title}</div></div>
-                  <div><span className="text-muted-foreground">Waktu Scan:</span> <div className="font-mono text-foreground font-bold">{scanResult.scanTime.toLocaleTimeString("id-ID")} WIB</div></div>
-                  <div className="pt-1 flex items-center gap-2">
-                    <span className="text-muted-foreground">Status Otomatis:</span>
-                    <Badge variant={scanResult.calculatedStatus === "HADIR" ? "default" : "secondary"} className="text-xs font-bold px-2 py-0.5">
-                      {scanResult.calculatedStatus}
-                    </Badge>
+              <CardContent className="p-4 space-y-4 text-xs">
+                <div className="p-3 rounded-lg bg-muted/60 space-y-1">
+                  <div className="font-bold text-foreground truncate">{scanResult.meeting.title}</div>
+                  <div className="text-muted-foreground flex justify-between">
+                    <span>Waktu Scan:</span>
+                    <span className="font-mono font-bold text-foreground">
+                      {scanResult.scanTime.toLocaleTimeString("id-ID")} WIB
+                    </span>
                   </div>
                 </div>
 
+                {scanResult.existingStatus && (
+                  <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-800 dark:text-amber-300 flex items-start gap-2">
+                    <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+                    <div>
+                      <div className="font-bold">⚠️ Peserta Sudah Melakukan Absensi!</div>
+                      <div>
+                        Status sebelumnya: <span className="font-bold">{scanResult.existingStatus}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={() => setScanResult(null)} className="w-1/3 text-xs">
-                    Batal
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={handleResetForNextScan}
+                  >
+                    Batal / Scan Lagi
                   </Button>
                   <Button
-                    size="sm"
+                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
                     onClick={handleConfirmAttendance}
                     disabled={confirming}
-                    className="w-2/3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
                   >
-                    {confirming ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Sparkles className="h-4 w-4 mr-1" />}
-                    Konfirmasi Kehadiran
+                    {confirming ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                    ) : (
+                      <CheckCircle2 className="h-4 w-4 mr-1" />
+                    )}
+                    Konfirmasi Hadir
                   </Button>
                 </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="border-dashed p-6 text-center text-muted-foreground space-y-2">
+              <QrCode className="h-10 w-10 mx-auto text-primary opacity-50" />
+              <div className="font-bold text-sm text-foreground">Menunggu Scan QR...</div>
+              <p className="text-xs">
+                Arahkan QR Code peserta ke area kamera atau masukkan kode token secara manual di bawah.
+              </p>
+            </Card>
+          )}
+
+          {/* Manual Input Fallback */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-bold flex items-center gap-1.5">
+                <Search className="h-4 w-4 text-primary" /> Input Manual Kode Token QR
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 text-xs">
+              <div className="space-y-1">
+                <Label>Kode Token QR</Label>
+                <Input
+                  value={manualToken}
+                  onChange={(e) => setManualToken(e.target.value)}
+                  placeholder="Contoh: GEN-CB-QR-..."
+                  className="font-mono text-xs"
+                />
               </div>
-            )}
-          </CardContent>
-        </Card>
+
+              <Button
+                onClick={() => processTokenLookup(manualToken)}
+                disabled={!manualToken.trim()}
+                className="w-full"
+                size="sm"
+              >
+                Cari & Verifikasi Token
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
