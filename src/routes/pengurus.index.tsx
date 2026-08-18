@@ -34,6 +34,11 @@ import {
   Clock,
   FileCheck2,
   Calendar,
+  Key,
+  Copy,
+  Eye,
+  EyeOff,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -61,6 +66,8 @@ function ManajemenPengurusPage() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
+  const [loginPassword, setLoginPassword] = useState("gencb123");
+  const [showPassword, setShowPassword] = useState(false);
   const [userRole, setUserRole] = useState<"ADMIN" | "PENGURUS">("PENGURUS");
   const [position, setPosition] = useState("Anggota");
   const [bidang, setBidang] = useState("Bidang Pemuda & Olahraga");
@@ -136,6 +143,8 @@ function ManajemenPengurusPage() {
     setFullName("");
     setEmail("");
     setWhatsapp("");
+    setLoginPassword("gencb123");
+    setShowPassword(false);
     setUserRole("PENGURUS");
     setPosition("Anggota");
     setBidang("Bidang Pemuda & Olahraga");
@@ -148,6 +157,8 @@ function ManajemenPengurusPage() {
     setFullName(p.full_name);
     setEmail(p.email);
     setWhatsapp(p.whatsapp || "");
+    setLoginPassword(p.login_password || "gencb123");
+    setShowPassword(false);
     setUserRole(p.role);
     setPosition(p.position || "Anggota");
     setBidang(p.bidang || "");
@@ -155,11 +166,19 @@ function ManajemenPengurusPage() {
     setFormOpen(true);
   };
 
+  const generateRandomPassword = () => {
+    const rand = Math.floor(1000 + Math.random() * 9000);
+    const pass = `Gencb${rand}!`;
+    setLoginPassword(pass);
+    toast.info(`Password dibuat: ${pass}`);
+  };
+
   const handleSaveUser = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!fullName.trim() || !email.trim()) return toast.error("Nama dan Email wajib diisi");
-    setSaving(true);
+    if (!loginPassword.trim()) return toast.error("Password akses wajib diisi");
 
+    setSaving(true);
     try {
       if (editingId) {
         await supabase
@@ -168,25 +187,27 @@ function ManajemenPengurusPage() {
             full_name: fullName,
             email,
             whatsapp,
+            login_password: loginPassword.trim(),
             role: userRole,
             position,
             bidang,
             divisi,
           })
           .eq("id", editingId);
-        toast.success("Data pengurus berhasil diperbarui");
+        toast.success(`Akun ${fullName} berhasil diperbarui (Password diset)`);
       } else {
         await supabase.from("profiles").insert({
           full_name: fullName,
           email,
           whatsapp,
+          login_password: loginPassword.trim(),
           role: userRole,
           position,
           bidang,
           divisi,
           is_active: true,
         });
-        toast.success("Pengurus baru berhasil ditambahkan");
+        toast.success(`Akun Pengurus Baru ${fullName} berhasil dibuat!`);
       }
 
       setFormOpen(false);
@@ -197,6 +218,12 @@ function ManajemenPengurusPage() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleCopyCredentials = (p: Profile) => {
+    const text = `Halo ${p.full_name},\nBerikut kredensial login akun GEN-CB Office Anda:\n\nEmail: ${p.email}\nPassword: ${p.login_password || "gencb123"}\nLink Login: https://gencboffice.lovable.app/login`;
+    navigator.clipboard.writeText(text);
+    toast.success(`Kredensial login ${p.full_name} berhasil disalin ke clipboard!`);
   };
 
   const handleToggleActive = async (p: Profile) => {
@@ -216,14 +243,14 @@ function ManajemenPengurusPage() {
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-3xl font-black tracking-tight flex items-center gap-2">
-            <Users className="h-7 w-7 text-primary" /> Manajemen Pengurus GEN-CB
+            <Users className="h-7 w-7 text-primary" /> Manajemen Akun & Pengurus GEN-CB
           </h1>
           <p className="text-sm text-muted-foreground">
-            Kelola akun pengurus, posisi/jabatan, bidang, divisi, dan pantau persentase kehadiran rapat.
+            Admin dapat membuatkan akun login (Email & Password), mengelola jabatan, dan menyalin kredensial akses.
           </p>
         </div>
         <Button onClick={handleOpenAdd} className="shadow-md">
-          <UserPlus className="h-4 w-4 mr-1.5" /> Tambah Pengurus Baru
+          <UserPlus className="h-4 w-4 mr-1.5" /> Tambah Akun Pengurus Baru
         </Button>
       </div>
 
@@ -259,12 +286,12 @@ function ManajemenPengurusPage() {
             <table className="w-full text-xs text-left">
               <thead className="bg-muted text-muted-foreground uppercase font-bold text-[10px]">
                 <tr>
-                  <th className="p-3">Nama Pengurus</th>
+                  <th className="p-3">Nama Pengurus & Login</th>
                   <th className="p-3">Jabatan / Divisi</th>
                   <th className="p-3">Role</th>
                   <th className="p-3">Kehadiran Rapat</th>
                   <th className="p-3">Status</th>
-                  <th className="p-3 text-right">Aksi</th>
+                  <th className="p-3 text-right">Aksi & Kredensial</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
@@ -274,9 +301,11 @@ function ManajemenPengurusPage() {
                     <tr key={p.id} className="hover:bg-muted/40 transition">
                       <td className="p-3">
                         <div className="font-bold text-sm text-foreground">{p.full_name}</div>
-                        <div className="text-[11px] text-muted-foreground flex items-center gap-2 mt-0.5">
-                          <span className="flex items-center gap-1"><Mail className="h-3 w-3" /> {p.email}</span>
-                          {p.whatsapp && <span className="flex items-center gap-1"><Phone className="h-3 w-3" /> {p.whatsapp}</span>}
+                        <div className="text-[11px] text-muted-foreground flex flex-wrap items-center gap-2 mt-0.5">
+                          <span className="flex items-center gap-1 font-semibold text-primary"><Mail className="h-3 w-3" /> {p.email}</span>
+                          <span className="flex items-center gap-1 font-mono text-[10px] bg-muted px-1.5 py-0.5 rounded">
+                            <Key className="h-3 w-3 text-muted-foreground" /> {p.login_password || "gencb123"}
+                          </span>
                         </div>
                       </td>
                       <td className="p-3">
@@ -303,6 +332,15 @@ function ManajemenPengurusPage() {
                         </Badge>
                       </td>
                       <td className="p-3 text-right space-x-1">
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          className="h-7 px-2 text-[10px] bg-primary/10 text-primary border-primary/20 hover:bg-primary/20"
+                          onClick={() => handleCopyCredentials(p)}
+                          title="Salin Kredensial Email & Password"
+                        >
+                          <Copy className="h-3.5 w-3.5 mr-1" /> Salin Akses
+                        </Button>
                         <Button
                           size="sm"
                           variant="ghost"
@@ -340,19 +378,52 @@ function ManajemenPengurusPage() {
 
       {/* Add / Edit Form Modal */}
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>{editingId ? "Edit Data Pengurus" : "Tambah Pengurus Baru"}</DialogTitle>
+            <DialogTitle>{editingId ? "Edit Akun & Password Pengurus" : "Buat Akun Pengurus Baru"}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSaveUser} className="space-y-3 py-2 text-xs">
             <div className="space-y-1">
-              <Label>Nama Lengkap <span className="text-destructive">*</span></Label>
-              <Input value={fullName} onChange={(e) => setFullName(e.target.value)} required />
+              <Label>Nama Lengkap Pengurus <span className="text-destructive">*</span></Label>
+              <Input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Contoh: Rizki Ramadhan" required />
             </div>
 
             <div className="space-y-1">
-              <Label>Email Resmi <span className="text-destructive">*</span></Label>
-              <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+              <Label>Email Resmi Login <span className="text-destructive">*</span></Label>
+              <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="rizki@gencb.org" required />
+            </div>
+
+            {/* Password Login Field */}
+            <div className="space-y-1">
+              <div className="flex justify-between items-center">
+                <Label>Password Akses Login <span className="text-destructive">*</span></Label>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-5 text-[10px] text-primary p-0"
+                  onClick={generateRandomPassword}
+                >
+                  <Sparkles className="h-3 w-3 mr-1" /> Acak Password
+                </Button>
+              </div>
+              <div className="relative">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  value={loginPassword}
+                  onChange={(e) => setLoginPassword(e.target.value)}
+                  placeholder="Password akun..."
+                  className="pr-10 font-mono"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
             </div>
 
             <div className="space-y-1">
@@ -362,7 +433,7 @@ function ManajemenPengurusPage() {
 
             <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1">
-                <Label>Role Akses</Label>
+                <Label>Role Akses Sistem</Label>
                 <Select value={userRole} onValueChange={(v) => setUserRole(v as "ADMIN" | "PENGURUS")}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -391,7 +462,7 @@ function ManajemenPengurusPage() {
             <DialogFooter className="pt-2">
               <Button type="button" variant="outline" onClick={() => setFormOpen(false)}>Batal</Button>
               <Button type="submit" disabled={saving}>
-                {saving ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : "Simpan Data"}
+                {saving ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : "Simpan & Buat Akun"}
               </Button>
             </DialogFooter>
           </form>

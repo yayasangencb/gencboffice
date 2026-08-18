@@ -11,6 +11,7 @@ export type Profile = {
   divisi?: string | null;
   kepanitiaan?: string | null;
   photo_url?: string | null;
+  login_password?: string | null;
   is_active: boolean;
   joined_date?: string | null;
   created_at?: string;

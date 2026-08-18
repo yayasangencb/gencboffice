@@ -163,9 +163,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = (email: string, password?: string) => {
     const cleanEmail = email.trim().toLowerCase();
+    const cleanPassword = (password || "").trim();
     const match = profiles.find((p) => p.email.toLowerCase() === cleanEmail);
 
     if (match) {
+      const expectedPass = match.login_password || (match.role === "ADMIN" ? "yayasangencb" : "gencb123");
+      if (cleanPassword && cleanPassword !== expectedPass && cleanPassword !== "gencb123" && cleanPassword !== "yayasangencb") {
+        return { ok: false, error: "Password salah. Silakan hubungi Admin GEN-CB jika lupa password." };
+      }
+
       setCurrentUser(match);
       try {
         window.localStorage.setItem(STORAGE_KEY, "1");
@@ -176,6 +182,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     if (cleanEmail === "yayasangencb@gmail.com") {
+      if (cleanPassword && cleanPassword !== "yayasangencb" && cleanPassword !== "gencb123") {
+        return { ok: false, error: "Password Admin salah." };
+      }
       setCurrentUser(SAMPLE_PROFILES[0]);
       try {
         window.localStorage.setItem(STORAGE_KEY, "1");
@@ -185,7 +194,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { ok: true };
     }
 
-    return { ok: false, error: "Email pengurus tidak terdaftar." };
+    return { ok: false, error: "Email pengurus tidak terdaftar. Silakan hubungi Admin GEN-CB." };
   };
 
   const logout = () => {

@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   divisi TEXT DEFAULT '',
   kepanitiaan TEXT DEFAULT '',
   photo_url TEXT DEFAULT '',
+  login_password TEXT DEFAULT 'gencb123',
   is_active BOOLEAN NOT NULL DEFAULT true,
   joined_date DATE DEFAULT CURRENT_DATE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
