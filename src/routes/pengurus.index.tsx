@@ -562,6 +562,8 @@ function ManajemenPengurusPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+      )}
+
       {/* Delete User Confirmation Dialog */}
       <AlertDialog open={!!deletingUser} onOpenChange={() => setDeletingUser(null)}>
         <AlertDialogContent>

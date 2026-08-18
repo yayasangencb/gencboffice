@@ -9,67 +9,30 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as TugasRouteImport } from './routes/tugas'
-import { Route as ScanQrRouteImport } from './routes/scan-qr'
-import { Route as RiwayatKehadiranRouteImport } from './routes/riwayat-kehadiran'
-import { Route as PengaturanRouteImport } from './routes/pengaturan'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as LaporanRapatRouteImport } from './routes/laporan-rapat'
-import { Route as FlayerRouteImport } from './routes/flayer'
-import { Route as DashboardRouteImport } from './routes/dashboard'
-import { Route as ArsipRouteImport } from './routes/arsip'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as UndanganIndexRouteImport } from './routes/undangan.index'
-import { Route as SuratIndexRouteImport } from './routes/surat/index'
-import { Route as VerifyIdRouteImport } from './routes/verify.$id'
-
-// Modul Rapat & Kalender Flat Routes
+import { Route as ArsipRouteImport } from './routes/arsip'
+import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as FlayerRouteImport } from './routes/flayer'
 import { Route as KalenderRouteImport } from './routes/kalender'
-import { Route as RapatIndexRouteImport } from './routes/rapat.index'
+import { Route as LaporanRapatRouteImport } from './routes/laporan-rapat'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as PengaturanRouteImport } from './routes/pengaturan'
+import { Route as RiwayatKehadiranRouteImport } from './routes/riwayat-kehadiran'
+import { Route as ScanQrRouteImport } from './routes/scan-qr'
+import { Route as TugasRouteImport } from './routes/tugas'
 import { Route as PengurusIndexRouteImport } from './routes/pengurus.index'
-import { Route as UndanganIdRouteImport } from './routes/undangan.$id'
+import { Route as RapatIndexRouteImport } from './routes/rapat.index'
+import { Route as RapatIdRouteImport } from './routes/rapat.$id'
 import { Route as RapatBaruRouteImport } from './routes/rapat.baru'
 import { Route as RapatPengajuanRouteImport } from './routes/rapat.pengajuan'
-import { Route as RapatIdRouteImport } from './routes/rapat.$id'
+import { Route as SuratIndexRouteImport } from './routes/surat.index'
+import { Route as UndanganIndexRouteImport } from './routes/undangan.index'
+import { Route as UndanganIdRouteImport } from './routes/undangan.$id'
+import { Route as VerifyIdRouteImport } from './routes/verify.$id'
 
-const TugasRoute = TugasRouteImport.update({
-  id: '/tugas',
-  path: '/tugas',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ScanQrRoute = ScanQrRouteImport.update({
-  id: '/scan-qr',
-  path: '/scan-qr',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RiwayatKehadiranRoute = RiwayatKehadiranRouteImport.update({
-  id: '/riwayat-kehadiran',
-  path: '/riwayat-kehadiran',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PengaturanRoute = PengaturanRouteImport.update({
-  id: '/pengaturan',
-  path: '/pengaturan',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LaporanRapatRoute = LaporanRapatRouteImport.update({
-  id: '/laporan-rapat',
-  path: '/laporan-rapat',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const FlayerRoute = FlayerRouteImport.update({
-  id: '/flayer',
-  path: '/flayer',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DashboardRoute = DashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ArsipRoute = ArsipRouteImport.update({
@@ -77,9 +40,14 @@ const ArsipRoute = ArsipRouteImport.update({
   path: '/arsip',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FlayerRoute = FlayerRouteImport.update({
+  id: '/flayer',
+  path: '/flayer',
   getParentRoute: () => rootRouteImport,
 } as any)
 const KalenderRoute = KalenderRouteImport.update({
@@ -87,19 +55,34 @@ const KalenderRoute = KalenderRouteImport.update({
   path: '/kalender',
   getParentRoute: () => rootRouteImport,
 } as any)
-const UndanganIndexRoute = UndanganIndexRouteImport.update({
-  id: '/undangan/',
-  path: '/undangan/',
+const LaporanRapatRoute = LaporanRapatRouteImport.update({
+  id: '/laporan-rapat',
+  path: '/laporan-rapat',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SuratIndexRoute = SuratIndexRouteImport.update({
-  id: '/surat/',
-  path: '/surat/',
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const RapatIndexRoute = RapatIndexRouteImport.update({
-  id: '/rapat/',
-  path: '/rapat/',
+const PengaturanRoute = PengaturanRouteImport.update({
+  id: '/pengaturan',
+  path: '/pengaturan',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RiwayatKehadiranRoute = RiwayatKehadiranRouteImport.update({
+  id: '/riwayat-kehadiran',
+  path: '/riwayat-kehadiran',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ScanQrRoute = ScanQrRouteImport.update({
+  id: '/scan-qr',
+  path: '/scan-qr',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TugasRoute = TugasRouteImport.update({
+  id: '/tugas',
+  path: '/tugas',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PengurusIndexRoute = PengurusIndexRouteImport.update({
@@ -107,14 +90,14 @@ const PengurusIndexRoute = PengurusIndexRouteImport.update({
   path: '/pengurus/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const VerifyIdRoute = VerifyIdRouteImport.update({
-  id: '/verify/$id',
-  path: '/verify/$id',
+const RapatIndexRoute = RapatIndexRouteImport.update({
+  id: '/rapat/',
+  path: '/rapat/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const UndanganIdRoute = UndanganIdRouteImport.update({
-  id: '/undangan/$id',
-  path: '/undangan/$id',
+const RapatIdRoute = RapatIdRouteImport.update({
+  id: '/rapat/$id',
+  path: '/rapat/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RapatBaruRoute = RapatBaruRouteImport.update({
@@ -127,9 +110,24 @@ const RapatPengajuanRoute = RapatPengajuanRouteImport.update({
   path: '/rapat/pengajuan',
   getParentRoute: () => rootRouteImport,
 } as any)
-const RapatIdRoute = RapatIdRouteImport.update({
-  id: '/rapat/$id',
-  path: '/rapat/$id',
+const SuratIndexRoute = SuratIndexRouteImport.update({
+  id: '/surat/',
+  path: '/surat/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UndanganIndexRoute = UndanganIndexRouteImport.update({
+  id: '/undangan/',
+  path: '/undangan/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UndanganIdRoute = UndanganIdRouteImport.update({
+  id: '/undangan/$id',
+  path: '/undangan/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VerifyIdRoute = VerifyIdRouteImport.update({
+  id: '/verify/$id',
+  path: '/verify/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -294,67 +292,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/tugas': {
-      id: '/tugas'
-      path: '/tugas'
-      fullPath: '/tugas'
-      preLoaderRoute: typeof TugasRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/scan-qr': {
-      id: '/scan-qr'
-      path: '/scan-qr'
-      fullPath: '/scan-qr'
-      preLoaderRoute: typeof ScanQrRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/riwayat-kehadiran': {
-      id: '/riwayat-kehadiran'
-      path: '/riwayat-kehadiran'
-      fullPath: '/riwayat-kehadiran'
-      preLoaderRoute: typeof RiwayatKehadiranRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/pengaturan': {
-      id: '/pengaturan'
-      path: '/pengaturan'
-      fullPath: '/pengaturan'
-      preLoaderRoute: typeof PengaturanRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/laporan-rapat': {
-      id: '/laporan-rapat'
-      path: '/laporan-rapat'
-      fullPath: '/laporan-rapat'
-      preLoaderRoute: typeof LaporanRapatRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/kalender': {
-      id: '/kalender'
-      path: '/kalender'
-      fullPath: '/kalender'
-      preLoaderRoute: typeof KalenderRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/flayer': {
-      id: '/flayer'
-      path: '/flayer'
-      fullPath: '/flayer'
-      preLoaderRoute: typeof FlayerRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/dashboard': {
-      id: '/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof DashboardRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/arsip': {
@@ -364,32 +306,67 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ArsipRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/undangan/': {
-      id: '/undangan/'
-      path: '/undangan'
-      fullPath: '/undangan/'
-      preLoaderRoute: typeof UndanganIndexRouteImport
+    '/flayer': {
+      id: '/flayer'
+      path: '/flayer'
+      fullPath: '/flayer'
+      preLoaderRoute: typeof FlayerRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/surat/': {
-      id: '/surat/'
-      path: '/surat'
-      fullPath: '/surat/'
-      preLoaderRoute: typeof SuratIndexRouteImport
+    '/kalender': {
+      id: '/kalender'
+      path: '/kalender'
+      fullPath: '/kalender'
+      preLoaderRoute: typeof KalenderRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/rapat/': {
-      id: '/rapat/'
-      path: '/rapat'
-      fullPath: '/rapat/'
-      preLoaderRoute: typeof RapatIndexRouteImport
+    '/laporan-rapat': {
+      id: '/laporan-rapat'
+      path: '/laporan-rapat'
+      fullPath: '/laporan-rapat'
+      preLoaderRoute: typeof LaporanRapatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pengaturan': {
+      id: '/pengaturan'
+      path: '/pengaturan'
+      fullPath: '/pengaturan'
+      preLoaderRoute: typeof PengaturanRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/riwayat-kehadiran': {
+      id: '/riwayat-kehadiran'
+      path: '/riwayat-kehadiran'
+      fullPath: '/riwayat-kehadiran'
+      preLoaderRoute: typeof RiwayatKehadiranRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/scan-qr': {
+      id: '/scan-qr'
+      path: '/scan-qr'
+      fullPath: '/scan-qr'
+      preLoaderRoute: typeof ScanQrRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tugas': {
+      id: '/tugas'
+      path: '/tugas'
+      fullPath: '/tugas'
+      preLoaderRoute: typeof TugasRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/pengurus/': {
@@ -399,18 +376,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PengurusIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/verify/$id': {
-      id: '/verify/$id'
-      path: '/verify/$id'
-      fullPath: '/verify/$id'
-      preLoaderRoute: typeof VerifyIdRouteImport
+    '/rapat/': {
+      id: '/rapat/'
+      path: '/rapat'
+      fullPath: '/rapat/'
+      preLoaderRoute: typeof RapatIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/undangan/$id': {
-      id: '/undangan/$id'
-      path: '/undangan/$id'
-      fullPath: '/undangan/$id'
-      preLoaderRoute: typeof UndanganIdRouteImport
+    '/rapat/$id': {
+      id: '/rapat/$id'
+      path: '/rapat/$id'
+      fullPath: '/rapat/$id'
+      preLoaderRoute: typeof RapatIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/rapat/baru': {
@@ -427,11 +404,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RapatPengajuanRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/rapat/$id': {
-      id: '/rapat/$id'
-      path: '/rapat/$id'
-      fullPath: '/rapat/$id'
-      preLoaderRoute: typeof RapatIdRouteImport
+    '/surat/': {
+      id: '/surat/'
+      path: '/surat'
+      fullPath: '/surat/'
+      preLoaderRoute: typeof SuratIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/undangan/': {
+      id: '/undangan/'
+      path: '/undangan'
+      fullPath: '/undangan/'
+      preLoaderRoute: typeof UndanganIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/undangan/$id': {
+      id: '/undangan/$id'
+      path: '/undangan/$id'
+      fullPath: '/undangan/$id'
+      preLoaderRoute: typeof UndanganIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/verify/$id': {
+      id: '/verify/$id'
+      path: '/verify/$id'
+      fullPath: '/verify/$id'
+      preLoaderRoute: typeof VerifyIdRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -459,7 +457,16 @@ const rootRouteChildren: RootRouteChildren = {
   SuratIndexRoute: SuratIndexRoute,
   UndanganIndexRoute: UndanganIndexRoute,
 }
-
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
