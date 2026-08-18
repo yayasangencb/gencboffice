@@ -59,7 +59,7 @@ function BuatRapatPage() {
   const [tagline, setTagline] = useState("Bersama merencanakan kegiatan, bersama mewujudkan prestasi.");
   const [picName, setPicName] = useState("");
   const [leaderName, setLeaderName] = useState("Edi Mulyadi");
-  const [notulisName, setNotulisName] = useState("Muhammad Raditya Anwar");
+  const [notulisName, setNotulisName] = useState("Admin GEN CB");
   const [submitting, setSubmitting] = useState(false);
 
   // Participant selection state

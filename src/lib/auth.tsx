@@ -10,13 +10,14 @@ const USER_KEY = "gencb.active_user_id";
 export const SAMPLE_PROFILES: Profile[] = [
   {
     id: "usr-admin-radit",
-    full_name: "Muhammad Raditya Anwar",
+    full_name: "Admin GEN CB",
     email: "yayasangencb@gmail.com",
     whatsapp: "085772202454",
     role: "ADMIN",
     position: "Admin GEN-CB / Sekretaris Jenderal",
     bidang: "Pengurus Harian",
     divisi: "Administrasi Utama",
+    login_password: "Generasicerdasberaksi_",
     photo_url: "",
     is_active: true,
     joined_date: "2024-01-10",
@@ -167,9 +168,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const match = profiles.find((p) => p.email.toLowerCase() === cleanEmail);
 
     if (match) {
-      const expectedPass = match.login_password || (match.role === "ADMIN" ? "yayasangencb" : "gencb123");
-      if (cleanPassword && cleanPassword !== expectedPass && cleanPassword !== "gencb123" && cleanPassword !== "yayasangencb") {
-        return { ok: false, error: "Password salah. Silakan hubungi Admin GEN-CB jika lupa password." };
+      const expectedPass = match.login_password || (match.role === "ADMIN" ? "Generasicerdasberaksi_" : "gencb123");
+      if (cleanPassword && cleanPassword !== expectedPass && cleanPassword !== "Generasicerdasberaksi_" && cleanPassword !== "gencb123") {
+        return { ok: false, error: "Password salah. Silakan periksa kembali password Anda." };
       }
 
       setCurrentUser(match);
@@ -182,7 +183,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     if (cleanEmail === "yayasangencb@gmail.com") {
-      if (cleanPassword && cleanPassword !== "yayasangencb" && cleanPassword !== "gencb123") {
+      if (cleanPassword && cleanPassword !== "Generasicerdasberaksi_" && cleanPassword !== "gencb123") {
         return { ok: false, error: "Password Admin salah." };
       }
       setCurrentUser(SAMPLE_PROFILES[0]);
