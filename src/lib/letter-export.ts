@@ -183,7 +183,7 @@ export async function generateLetterDocx(data: LetterData, org: Organization): P
   return await Packer.toBlob(doc);
 }
 
-export function sanitizeClonedDocForCanvas(clonedDoc: Document) {
+export function sanitizeClonedDocForCanvas(clonedDoc: globalThis.Document) {
   const linkElements = clonedDoc.querySelectorAll("link[rel='stylesheet']");
   linkElements.forEach((link) => link.remove());
 

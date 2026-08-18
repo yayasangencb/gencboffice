@@ -139,7 +139,7 @@ function UndanganListPage() {
                           ? "outline"
                           : attStatus === "ALFA"
                           ? "destructive"
-                          : "ghost"
+                          : "outline"
                       }
                       className="text-xs font-bold"
                     >
