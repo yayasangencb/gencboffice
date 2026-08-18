@@ -776,7 +776,7 @@ function MeetingWorkspacePage() {
             </CardHeader>
             <CardContent className="flex flex-wrap gap-3">
               <Button
-                onClick={() => exportRekapPdf(meeting, fullAttendanceRows, org!)}
+                onClick={() => exportRekapPdf(meeting, fullAttendanceRows, org as any)}
                 className="gap-2 bg-primary"
               >
                 <FileText className="h-4 w-4" /> Download Rekap PDF (Kop GEN-CB)
