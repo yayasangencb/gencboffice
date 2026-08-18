@@ -39,6 +39,8 @@ CREATE TABLE IF NOT EXISTS public.meetings (
   notulis_name TEXT DEFAULT '',
   status TEXT NOT NULL DEFAULT 'Akan Datang', -- 'Akan Datang', 'Sedang Berlangsung', 'Selesai', 'Dibatalkan'
   is_closed BOOLEAN NOT NULL DEFAULT false,
+  proposed_by_name TEXT DEFAULT '',
+  proposed_by_id TEXT DEFAULT '',
   created_by UUID REFERENCES public.profiles(id),
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()

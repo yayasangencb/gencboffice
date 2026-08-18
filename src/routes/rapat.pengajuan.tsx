@@ -66,8 +66,7 @@ function PengajuanRapatPage() {
           attendance_close_at: "10:00",
           location,
           tagline,
-          proposed_by_name: user?.full_name || "Pengurus",
-          proposed_by_id: user?.id,
+          pic_name: user?.full_name || "Pengurus",
           status: "MENUNGGU PERSETUJUAN",
           is_closed: false,
         })

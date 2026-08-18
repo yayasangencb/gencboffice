@@ -195,7 +195,7 @@ function DaftarRapatPage() {
                 <div>
                   <div className="font-bold text-sm">{m.title}</div>
                   <div className="text-xs text-muted-foreground">
-                    Pengaju: <span className="font-semibold text-foreground">{m.proposed_by_name || "Pengurus"}</span> · Tanggal: {m.meeting_date} {m.start_time} WIB
+                    Pengaju: <span className="font-semibold text-foreground">{m.proposed_by_name || m.pic_name || "Pengurus"}</span> · Tanggal: {m.meeting_date} {m.start_time} WIB
                   </div>
                 </div>
                 <div className="flex gap-2">

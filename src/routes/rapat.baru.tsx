@@ -447,23 +447,25 @@ function BuatRapatPage() {
                 {filteredProfiles.map((p) => {
                   const selected = selectedUserIds.includes(p.id);
                   return (
-                    <div
+                    <label
                       key={p.id}
-                      onClick={() => toggleUser(p.id)}
-                      className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition ${
+                      className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer select-none transition ${
                         selected
                           ? "border-primary bg-primary/5 ring-1 ring-primary/30"
                           : "hover:bg-muted/50"
                       }`}
                     >
-                      <Checkbox checked={selected} onCheckedChange={() => toggleUser(p.id)} />
+                      <Checkbox
+                        checked={selected}
+                        onCheckedChange={() => toggleUser(p.id)}
+                      />
                       <div className="min-w-0 flex-1 text-xs">
                         <div className="font-bold text-foreground truncate">{p.full_name}</div>
                         <div className="text-muted-foreground truncate">
                           {p.position} · {p.bidang || p.divisi || "Pengurus"}
                         </div>
                       </div>
-                    </div>
+                    </label>
                   );
                 })}
               </div>
