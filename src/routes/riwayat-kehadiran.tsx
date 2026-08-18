@@ -163,7 +163,7 @@ function RiwayatKehadiranPage() {
                               ? "outline"
                               : item.att.status === "ALFA"
                               ? "destructive"
-                              : "ghost"
+                              : "outline"
                           }
                           className="text-[10px] font-bold"
                         >

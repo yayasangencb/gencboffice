@@ -621,7 +621,7 @@ function MeetingWorkspacePage() {
                                   ? "outline"
                                   : r.status === "ALFA"
                                   ? "destructive"
-                                  : "ghost"
+                                  : "outline"
                               }
                               className="text-[10px] font-bold"
                             >
@@ -757,7 +757,7 @@ function MeetingWorkspacePage() {
 
         {/* Tab 4: Notulen Rapat */}
         <TabsContent value="notulen">
-          <NotulenWorkspace meetingId={meetingId} initialMinutes={minutes} onSave={refetchMinutes} />
+          <NotulenWorkspace meetingId={meetingId} initialMinutes={minutes ?? null} onSave={refetchMinutes} />
         </TabsContent>
 
         {/* Tab 5: Keputusan & Action Items */}
@@ -776,7 +776,7 @@ function MeetingWorkspacePage() {
             </CardHeader>
             <CardContent className="flex flex-wrap gap-3">
               <Button
-                onClick={() => exportRekapPdf(meeting, fullAttendanceRows, org)}
+                onClick={() => exportRekapPdf(meeting, fullAttendanceRows, org as any)}
                 className="gap-2 bg-primary"
               >
                 <FileText className="h-4 w-4" /> Download Rekap PDF (Kop GEN-CB)
@@ -828,6 +828,7 @@ function MeetingWorkspacePage() {
               </CardContent>
             </Card>
           </TabsContent>
+        )}
         </Tabs>
 
         {/* Override Modal */}
