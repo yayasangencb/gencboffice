@@ -18,6 +18,18 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as SuratIndexRouteImport } from './routes/surat/index'
 import { Route as VerifyIdRouteImport } from './routes/verify.$id'
 
+// Modul Rapat Routes
+import { Route as RapatIndexRouteImport } from './routes/rapat/index'
+import { Route as RapatBaruRouteImport } from './routes/rapat/baru'
+import { Route as RapatIdRouteImport } from './routes/rapat/$id'
+import { Route as UndanganIndexRouteImport } from './routes/undangan/index'
+import { Route as UndanganIdRouteImport } from './routes/undangan/$id'
+import { Route as ScanQrRouteImport } from './routes/scan-qr'
+import { Route as PengurusIndexRouteImport } from './routes/pengurus/index'
+import { Route as LaporanRapatRouteImport } from './routes/laporan-rapat'
+import { Route as TugasRouteImport } from './routes/tugas'
+import { Route as RiwayatKehadiranRouteImport } from './routes/riwayat-kehadiran'
+
 const PengaturanRoute = PengaturanRouteImport.update({
   id: '/pengaturan',
   path: '/pengaturan',
@@ -59,6 +71,58 @@ const VerifyIdRoute = VerifyIdRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 
+// Modul Rapat Updates
+const RapatIndexRoute = RapatIndexRouteImport.update({
+  id: '/rapat/',
+  path: '/rapat/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RapatBaruRoute = RapatBaruRouteImport.update({
+  id: '/rapat/baru',
+  path: '/rapat/baru',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RapatIdRoute = RapatIdRouteImport.update({
+  id: '/rapat/$id',
+  path: '/rapat/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UndanganIndexRoute = UndanganIndexRouteImport.update({
+  id: '/undangan/',
+  path: '/undangan/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UndanganIdRoute = UndanganIdRouteImport.update({
+  id: '/undangan/$id',
+  path: '/undangan/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ScanQrRoute = ScanQrRouteImport.update({
+  id: '/scan-qr',
+  path: '/scan-qr',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PengurusIndexRoute = PengurusIndexRouteImport.update({
+  id: '/pengurus/',
+  path: '/pengurus/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LaporanRapatRoute = LaporanRapatRouteImport.update({
+  id: '/laporan-rapat',
+  path: '/laporan-rapat',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TugasRoute = TugasRouteImport.update({
+  id: '/tugas',
+  path: '/tugas',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RiwayatKehadiranRoute = RiwayatKehadiranRouteImport.update({
+  id: '/riwayat-kehadiran',
+  path: '/riwayat-kehadiran',
+  getParentRoute: () => rootRouteImport,
+} as any)
+
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/arsip': typeof ArsipRoute
@@ -68,6 +132,16 @@ export interface FileRoutesByFullPath {
   '/pengaturan': typeof PengaturanRoute
   '/verify/$id': typeof VerifyIdRoute
   '/surat/': typeof SuratIndexRoute
+  '/rapat/': typeof RapatIndexRoute
+  '/rapat/baru': typeof RapatBaruRoute
+  '/rapat/$id': typeof RapatIdRoute
+  '/undangan/': typeof UndanganIndexRoute
+  '/undangan/$id': typeof UndanganIdRoute
+  '/scan-qr': typeof ScanQrRoute
+  '/pengurus/': typeof PengurusIndexRoute
+  '/laporan-rapat': typeof LaporanRapatRoute
+  '/tugas': typeof TugasRoute
+  '/riwayat-kehadiran': typeof RiwayatKehadiranRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -78,6 +152,16 @@ export interface FileRoutesByTo {
   '/pengaturan': typeof PengaturanRoute
   '/verify/$id': typeof VerifyIdRoute
   '/surat': typeof SuratIndexRoute
+  '/rapat': typeof RapatIndexRoute
+  '/rapat/baru': typeof RapatBaruRoute
+  '/rapat/$id': typeof RapatIdRoute
+  '/undangan': typeof UndanganIndexRoute
+  '/undangan/$id': typeof UndanganIdRoute
+  '/scan-qr': typeof ScanQrRoute
+  '/pengurus': typeof PengurusIndexRoute
+  '/laporan-rapat': typeof LaporanRapatRoute
+  '/tugas': typeof TugasRoute
+  '/riwayat-kehadiran': typeof RiwayatKehadiranRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -89,6 +173,16 @@ export interface FileRoutesById {
   '/pengaturan': typeof PengaturanRoute
   '/verify/$id': typeof VerifyIdRoute
   '/surat/': typeof SuratIndexRoute
+  '/rapat/': typeof RapatIndexRoute
+  '/rapat/baru': typeof RapatBaruRoute
+  '/rapat/$id': typeof RapatIdRoute
+  '/undangan/': typeof UndanganIndexRoute
+  '/undangan/$id': typeof UndanganIdRoute
+  '/scan-qr': typeof ScanQrRoute
+  '/pengurus/': typeof PengurusIndexRoute
+  '/laporan-rapat': typeof LaporanRapatRoute
+  '/tugas': typeof TugasRoute
+  '/riwayat-kehadiran': typeof RiwayatKehadiranRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -101,6 +195,16 @@ export interface FileRouteTypes {
     | '/pengaturan'
     | '/verify/$id'
     | '/surat/'
+    | '/rapat/'
+    | '/rapat/baru'
+    | '/rapat/$id'
+    | '/undangan/'
+    | '/undangan/$id'
+    | '/scan-qr'
+    | '/pengurus/'
+    | '/laporan-rapat'
+    | '/tugas'
+    | '/riwayat-kehadiran'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -111,6 +215,16 @@ export interface FileRouteTypes {
     | '/pengaturan'
     | '/verify/$id'
     | '/surat'
+    | '/rapat'
+    | '/rapat/baru'
+    | '/rapat/$id'
+    | '/undangan'
+    | '/undangan/$id'
+    | '/scan-qr'
+    | '/pengurus'
+    | '/laporan-rapat'
+    | '/tugas'
+    | '/riwayat-kehadiran'
   id:
     | '__root__'
     | '/'
@@ -121,6 +235,16 @@ export interface FileRouteTypes {
     | '/pengaturan'
     | '/verify/$id'
     | '/surat/'
+    | '/rapat/'
+    | '/rapat/baru'
+    | '/rapat/$id'
+    | '/undangan/'
+    | '/undangan/$id'
+    | '/scan-qr'
+    | '/pengurus/'
+    | '/laporan-rapat'
+    | '/tugas'
+    | '/riwayat-kehadiran'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -132,6 +256,16 @@ export interface RootRouteChildren {
   PengaturanRoute: typeof PengaturanRoute
   VerifyIdRoute: typeof VerifyIdRoute
   SuratIndexRoute: typeof SuratIndexRoute
+  RapatIndexRoute: typeof RapatIndexRoute
+  RapatBaruRoute: typeof RapatBaruRoute
+  RapatIdRoute: typeof RapatIdRoute
+  UndanganIndexRoute: typeof UndanganIndexRoute
+  UndanganIdRoute: typeof UndanganIdRoute
+  ScanQrRoute: typeof ScanQrRoute
+  PengurusIndexRoute: typeof PengurusIndexRoute
+  LaporanRapatRoute: typeof LaporanRapatRoute
+  TugasRoute: typeof TugasRoute
+  RiwayatKehadiranRoute: typeof RiwayatKehadiranRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -192,6 +326,76 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof VerifyIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/rapat/': {
+      id: '/rapat/'
+      path: '/rapat'
+      fullPath: '/rapat/'
+      preLoaderRoute: typeof RapatIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rapat/baru': {
+      id: '/rapat/baru'
+      path: '/rapat/baru'
+      fullPath: '/rapat/baru'
+      preLoaderRoute: typeof RapatBaruRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rapat/$id': {
+      id: '/rapat/$id'
+      path: '/rapat/$id'
+      fullPath: '/rapat/$id'
+      preLoaderRoute: typeof RapatIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/undangan/': {
+      id: '/undangan/'
+      path: '/undangan'
+      fullPath: '/undangan/'
+      preLoaderRoute: typeof UndanganIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/undangan/$id': {
+      id: '/undangan/$id'
+      path: '/undangan/$id'
+      fullPath: '/undangan/$id'
+      preLoaderRoute: typeof UndanganIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/scan-qr': {
+      id: '/scan-qr'
+      path: '/scan-qr'
+      fullPath: '/scan-qr'
+      preLoaderRoute: typeof ScanQrRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pengurus/': {
+      id: '/pengurus/'
+      path: '/pengurus'
+      fullPath: '/pengurus/'
+      preLoaderRoute: typeof PengurusIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/laporan-rapat': {
+      id: '/laporan-rapat'
+      path: '/laporan-rapat'
+      fullPath: '/laporan-rapat'
+      preLoaderRoute: typeof LaporanRapatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tugas': {
+      id: '/tugas'
+      path: '/tugas'
+      fullPath: '/tugas'
+      preLoaderRoute: typeof TugasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/riwayat-kehadiran': {
+      id: '/riwayat-kehadiran'
+      path: '/riwayat-kehadiran'
+      fullPath: '/riwayat-kehadiran'
+      preLoaderRoute: typeof RiwayatKehadiranRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -204,7 +408,18 @@ const rootRouteChildren: RootRouteChildren = {
   PengaturanRoute: PengaturanRoute,
   VerifyIdRoute: VerifyIdRoute,
   SuratIndexRoute: SuratIndexRoute,
+  RapatIndexRoute: RapatIndexRoute,
+  RapatBaruRoute: RapatBaruRoute,
+  RapatIdRoute: RapatIdRoute,
+  UndanganIndexRoute: UndanganIndexRoute,
+  UndanganIdRoute: UndanganIdRoute,
+  ScanQrRoute: ScanQrRoute,
+  PengurusIndexRoute: PengurusIndexRoute,
+  LaporanRapatRoute: LaporanRapatRoute,
+  TugasRoute: TugasRoute,
+  RiwayatKehadiranRoute: RiwayatKehadiranRoute,
 }
+
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()

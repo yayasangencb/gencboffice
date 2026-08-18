@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { RequireAuth } from "@/components/app-shell";
-import { FileText, Image as ImageIcon, Archive, Settings, ArrowRight } from "lucide-react";
+import { FileText, Image as ImageIcon, Archive, Settings, ArrowRight, CalendarDays, QrCode, CheckSquare } from "lucide-react";
 import { LOGO_URL } from "@/lib/brand";
 
 export const Route = createFileRoute("/dashboard")({
@@ -13,6 +13,38 @@ export const Route = createFileRoute("/dashboard")({
 });
 
 const cards = [
+  {
+    to: "/rapat",
+    title: "Modul Rapat GEN-CB",
+    desc: "Kelola agenda rapat, pembuatan flyer otomatis, dan notulen.",
+    icon: CalendarDays,
+    tone: "brand" as const,
+    emoji: "📅",
+  },
+  {
+    to: "/undangan",
+    title: "Undangan Rapat Saya",
+    desc: "Lihat undangan rapat wajib hadir & dapatkan QR Code unik Anda.",
+    icon: FileText,
+    tone: "accent" as const,
+    emoji: "🎟️",
+  },
+  {
+    to: "/scan-qr",
+    title: "Scan QR Kehadiran",
+    desc: "Admin Camera QR Scanner presensi rapat real-time.",
+    icon: QrCode,
+    tone: "brand" as const,
+    emoji: "📷",
+  },
+  {
+    to: "/tugas",
+    title: "Tugas Saya (Action Items)",
+    desc: "Daftar tindak lanjut & tugas dari hasil keputusan rapat.",
+    icon: CheckSquare,
+    tone: "muted" as const,
+    emoji: "✅",
+  },
   {
     to: "/surat",
     title: "Generator Surat",
@@ -31,7 +63,7 @@ const cards = [
   },
   {
     to: "/arsip",
-    title: "Arsip",
+    title: "Arsip Surat",
     desc: "Semua surat & flayer yang pernah dibuat tersimpan di sini.",
     icon: Archive,
     tone: "muted" as const,
@@ -39,7 +71,7 @@ const cards = [
   },
   {
     to: "/pengaturan",
-    title: "Pengaturan",
+    title: "Pengaturan Organisasi",
     desc: "Data organisasi, logo, dan tanda tangan digital.",
     icon: Settings,
     tone: "muted" as const,

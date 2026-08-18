@@ -1,17 +1,24 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useSearch } from "@tanstack/react-router";
 import { RequireAuth } from "@/components/app-shell";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { forwardRef, useMemo, useRef, useState } from "react";
-import { Calendar, Clock, MapPin, Download, FileImage, FileText, Loader2 } from "lucide-react";
+import { forwardRef, useEffect, useMemo, useRef, useState } from "react";
+import { Calendar, Clock, MapPin, Download, FileImage, FileText, Loader2, Sparkles } from "lucide-react";
 import { LOGO_URL, formatIdDate } from "@/lib/brand";
 import { renderElementToCanvas } from "@/lib/letter-export";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { z } from "zod";
+
+const searchSchema = z.object({
+  meetingId: z.string().optional(),
+});
 
 export const Route = createFileRoute("/flayer")({
+  validateSearch: searchSchema,
   head: () => ({ meta: [{ title: "Generator Flayer — GEN-CB Office" }] }),
   component: () => (
     <RequireAuth>
@@ -23,6 +30,9 @@ export const Route = createFileRoute("/flayer")({
 const DAYS = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
 
 function FlayerPage() {
+  const search = useSearch({ from: "/flayer" });
+  const meetingId = search.meetingId;
+
   const [heading, setHeading] = useState("RAPAT PEMBAHASAN");
   const [subheading, setSubheading] = useState("GEN-CB");
   const [title, setTitle] = useState("LOMBA TENIS MEJA");
@@ -34,6 +44,34 @@ function FlayerPage() {
   );
   const [busy, setBusy] = useState<null | "png" | "jpg" | "pdf">(null);
   const previewRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    async function loadMeeting() {
+      if (!meetingId) return;
+      try {
+        const { data, error } = await supabase
+          .from("meetings")
+          .select("*")
+          .eq("id", meetingId)
+          .single();
+        if (error) throw error;
+        if (data) {
+          setTitle(data.title.toUpperCase());
+          setHeading(data.category ? data.category.toUpperCase() : "RAPAT PEMBAHASAN");
+          setSubheading("GEN-CB");
+          setDate(data.meeting_date);
+          const formattedTime = `${data.start_time}${data.end_time ? " - " + data.end_time : ""} WIB`;
+          setTimeText(formattedTime);
+          if (data.location) setLocation(data.location);
+          if (data.tagline) setQuote(data.tagline);
+          toast.success("Data rapat berhasil dimuat ke Template Flayer");
+        }
+      } catch (e) {
+        toast.error("Gagal memuat data rapat: " + (e as Error).message);
+      }
+    }
+    loadMeeting();
+  }, [meetingId]);
 
   const dateLine = useMemo(() => {
     if (!date) return { day: "", full: "" };
